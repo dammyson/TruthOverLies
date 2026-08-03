@@ -1,4 +1,4 @@
-package com.godsplace
+package com.truthoverlies
 
 import android.app.Application
 import com.facebook.react.PackageList

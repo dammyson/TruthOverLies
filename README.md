@@ -95,3 +95,26 @@ To learn more about React Native, take a look at the following resources:
 - [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
 - [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
 - [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+
+# Backend
+
+A FastAPI + Postgres backend lives in [backend/](backend). It is split into separate folders for `core`, `db`, `entities`, `models`, `repositories`, `requests`, `responses`, `routes`, `services`, and `seeders`.
+
+Run it locally without Docker:
+
+```sh
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export DATABASE_URL=postgresql+psycopg://godsplace:godsplace@localhost:5432/godsplace
+uvicorn app.main:app --reload
+```
+
+The API will be available at `http://localhost:8000` and the health check at `http://localhost:8000/health`.
+
+# Backend
+
+A FastAPI + Postgres backend lives in [backend/](backend). It exposes a health check, the feeling list, devotion CRUD, and recommendation endpoints seeded from the app's devotional content.
+
+For local development, use the backend instructions in [backend/README.md](backend/README.md). The API will be available at `http://localhost:8000` and the health check at `http://localhost:8000/health`.
