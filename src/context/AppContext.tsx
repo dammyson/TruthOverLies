@@ -108,8 +108,7 @@ function AppProvider({children}: {children: ReactNode}) {
 
   const logout = () => {
     setCurrentUser(null);
-    setAuthMessageTone('success');
-    setAuthMessage('Signed out.');
+    clearAuthMessage();
   };
 
   const toggleFeeling = (feeling: FeelingOption) => {

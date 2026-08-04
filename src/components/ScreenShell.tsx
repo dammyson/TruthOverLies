@@ -1,4 +1,4 @@
-import React, {ReactNode} from 'react';
+import React, {ReactNode, useMemo} from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import {colors} from '../theme/colors';
+import {useTheme} from '../context/ThemeContext';
 
 type ScreenShellProps = {
   children: ReactNode;
@@ -18,6 +18,31 @@ type ScreenShellProps = {
 };
 
 function ScreenShell({children, scrollable = true, keyboardAware = false}: ScreenShellProps) {
+  const {colors, isDark} = useTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        safeArea: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        flex: {
+          flex: 1,
+        },
+        scrollContent: {
+          flexGrow: 1,
+        },
+        canvas: {
+          flexGrow: 1,
+          paddingHorizontal: 18,
+          paddingVertical: 18,
+          backgroundColor: colors.background,
+        },
+      }),
+    [colors],
+  );
+
   const content = scrollable ? (
     <ScrollView
       bounces={false}
@@ -31,7 +56,10 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
       {keyboardAware ? (
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -44,24 +72,5 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  flex: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  canvas: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-    backgroundColor: colors.background,
-  },
-});
 
 export default ScreenShell;

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 
-import {colors} from '../theme/colors';
+import {useTheme} from '../context/ThemeContext';
 import {AuthMessageTone} from '../types/app';
 
 type MessageBannerProps = {
@@ -10,6 +10,38 @@ type MessageBannerProps = {
 };
 
 function MessageBanner({message, tone}: MessageBannerProps) {
+  const {colors} = useTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          borderRadius: 12,
+          paddingHorizontal: 12,
+          paddingVertical: 10,
+          marginBottom: 12,
+        },
+        containerError: {
+          backgroundColor: colors.errorBg,
+        },
+        containerSuccess: {
+          backgroundColor: colors.successBg,
+        },
+        text: {
+          fontSize: 13,
+          lineHeight: 18,
+          fontWeight: '600',
+        },
+        textError: {
+          color: colors.errorText,
+        },
+        textSuccess: {
+          color: colors.successText,
+        },
+      }),
+    [colors],
+  );
+
   if (!message) {
     return null;
   }
@@ -26,31 +58,5 @@ function MessageBanner({message, tone}: MessageBannerProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginBottom: 18,
-  },
-  containerError: {
-    backgroundColor: colors.errorBg,
-  },
-  containerSuccess: {
-    backgroundColor: colors.successBg,
-  },
-  text: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
-  },
-  textError: {
-    color: colors.errorText,
-  },
-  textSuccess: {
-    color: colors.successText,
-  },
-});
 
 export default MessageBanner;

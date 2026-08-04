@@ -1,13 +1,16 @@
 import React from 'react';
 
 import {AppProvider} from './context/AppContext';
+import {ThemeProvider} from './context/ThemeContext';
 import AppNavigator from './navigation/AppNavigator';
 
 function App() {
   return (
-    <AppProvider>
-      <AppNavigator />
-    </AppProvider>
+    <ThemeProvider>
+      <AppProvider>
+        <AppNavigator />
+      </AppProvider>
+    </ThemeProvider>
   );
 }
 

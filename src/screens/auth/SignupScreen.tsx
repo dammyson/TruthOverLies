@@ -1,31 +1,51 @@
-import React, {useState} from 'react';
-import {Pressable, StyleSheet, Text} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import AuthCard from '../../components/AuthCard';
 import FormField from '../../components/FormField';
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
-import {useAppContext} from '../../context/AppContext';
+import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import useTransitionAction from '../../hooks/useTransitionAction';
-import {AuthStackParamList} from '../../navigation/AuthNavigator';
-import {colors} from '../../theme/colors';
+import { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Signup'>;
 
-function SignupScreen({navigation}: Props) {
-  const {authMessage, authMessageTone, clearAuthMessage, signup} = useAppContext();
+function SignupScreen({ navigation }: Props) {
+  const { authMessage, authMessageTone, clearAuthMessage, signup } =
+    useAppContext();
+  const { colors } = useTheme();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const {isTransitioning, runWithTransition} = useTransitionAction();
+  const { isTransitioning, runWithTransition } = useTransitionAction();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        footerText: {
+          fontSize: 13,
+          lineHeight: 20,
+          color: colors.muted,
+          textAlign: 'center',
+        },
+        footerLink: {
+          color: colors.primaryDark,
+          fontWeight: '700',
+        },
+      }),
+    [colors],
+  );
 
   return (
     <ScreenShell keyboardAware>
       <AuthCard
         subtitle="Join God's Place to begin your devotional journey."
-        title="Create Account">
+        title="Create Account"
+      >
         <MessageBanner message={authMessage} tone={authMessageTone} />
         <FormField
           label="Full Name"
@@ -66,27 +86,18 @@ function SignupScreen({navigation}: Props) {
             });
           }}
         />
-        <Pressable accessibilityRole="button" onPress={() => navigation.navigate('Login')}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('Login')}
+        >
           <Text style={styles.footerText}>
-            Already have an account? <Text style={styles.footerLink}>Log in</Text>
+            Already have an account?{' '}
+            <Text style={styles.footerLink}>Log in</Text>
           </Text>
         </Pressable>
       </AuthCard>
     </ScreenShell>
   );
 }
-
-const styles = StyleSheet.create({
-  footerText: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.muted,
-    textAlign: 'center',
-  },
-  footerLink: {
-    color: colors.primaryDark,
-    fontWeight: '700',
-  },
-});
 
 export default SignupScreen;

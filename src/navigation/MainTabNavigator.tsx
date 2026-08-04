@@ -1,11 +1,11 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {Text} from 'react-native';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import ProfileScreen from '../screens/main/ProfileScreen';
 import SavedScreen from '../screens/main/SavedScreen';
-import {colors} from '../theme/colors';
+import {useTheme} from '../context/ThemeContext';
+import {HomeIcon, SavedIcon, ProfileIcon} from '../components/TabIcons';
 
 export type MainTabParamList = {
   Home: undefined;
@@ -16,6 +16,8 @@ export type MainTabParamList = {
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabNavigator() {
+  const {colors} = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
@@ -33,11 +35,11 @@ function MainTabNavigator() {
           fontSize: 12,
           fontWeight: '700',
         },
-        tabBarIcon: ({color, focused}) => (
-          <Text style={{fontSize: 16, color, opacity: focused ? 1 : 0.88}}>
-            {route.name === 'Home' ? '◉' : route.name === 'Saved' ? '◌' : '◎'}
-          </Text>
-        ),
+        tabBarIcon: ({color}) => {
+          if (route.name === 'Home') return <HomeIcon color={color} size={22} />;
+          if (route.name === 'Saved') return <SavedIcon color={color} size={22} />;
+          return <ProfileIcon color={color} size={22} />;
+        },
       })}>
       <Tab.Screen component={HomeStackNavigator} name="Home" />
       <Tab.Screen component={SavedScreen} name="Saved" />

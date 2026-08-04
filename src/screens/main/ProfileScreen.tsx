@@ -1,12 +1,129 @@
-import React from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useMemo} from 'react';
+import {Pressable, StyleSheet, Switch, Text, View} from 'react-native';
 
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
-import {colors} from '../../theme/colors';
+import {useTheme} from '../../context/ThemeContext';
 
 function ProfileScreen() {
   const {currentUser, logout, savedCards, selectedFeelings} = useAppContext();
+  const {colors, themeMode, setThemeMode, isDark} = useTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        profileCard: {
+          backgroundColor: colors.surface,
+          borderRadius: 28,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 18,
+          alignItems: 'center',
+        },
+        badge: {
+          width: 70,
+          height: 70,
+          borderRadius: 35,
+          backgroundColor: colors.badgeBg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 14,
+        },
+        badgeText: {
+          fontSize: 22,
+          lineHeight: 28,
+          fontWeight: '800',
+          color: colors.primaryDark,
+        },
+        eyebrow: {
+          fontSize: 12,
+          lineHeight: 16,
+          fontWeight: '700',
+          letterSpacing: 1,
+          textTransform: 'uppercase',
+          color: colors.primaryDark,
+          marginBottom: 6,
+        },
+        name: {
+          fontSize: 22,
+          lineHeight: 28,
+          fontWeight: '800',
+          color: colors.text,
+          textAlign: 'center',
+          marginBottom: 4,
+        },
+        email: {
+          fontSize: 14,
+          lineHeight: 20,
+          color: colors.muted,
+          marginBottom: 16,
+        },
+        panel: {
+          width: '100%',
+          borderRadius: 20,
+          backgroundColor: colors.surfaceStrong,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: 16,
+          marginBottom: 14,
+        },
+        panelTitle: {
+          fontSize: 15,
+          lineHeight: 20,
+          fontWeight: '800',
+          color: colors.text,
+          marginBottom: 12,
+        },
+        row: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 14,
+        },
+        rowLabel: {
+          fontSize: 14,
+          lineHeight: 20,
+          color: colors.muted,
+        },
+        rowValue: {
+          flex: 1,
+          fontSize: 14,
+          lineHeight: 20,
+          fontWeight: '700',
+          color: colors.text,
+          textAlign: 'right',
+        },
+        divider: {
+          height: 1,
+          backgroundColor: colors.border,
+          marginVertical: 10,
+        },
+        systemLink: {
+          fontSize: 12,
+          lineHeight: 16,
+          color: colors.primary,
+          fontWeight: '600',
+          marginTop: 6,
+          textAlign: 'right',
+        },
+        logoutButton: {
+          minHeight: 48,
+          minWidth: 140,
+          borderRadius: 16,
+          backgroundColor: colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 20,
+        },
+        logoutText: {
+          fontSize: 15,
+          lineHeight: 20,
+          fontWeight: '800',
+          color: colors.white,
+        },
+      }),
+    [colors],
+  );
 
   if (!currentUser) {
     return null;
@@ -46,6 +163,27 @@ function ProfileScreen() {
           </View>
         </View>
 
+        <View style={styles.panel}>
+          <Text style={styles.panelTitle}>Appearance</Text>
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Dark mode</Text>
+            <Switch
+              value={isDark}
+              onValueChange={val => setThemeMode(val ? 'dark' : 'light')}
+              trackColor={{false: colors.border, true: colors.primary}}
+              thumbColor={colors.white}
+            />
+          </View>
+          {themeMode !== 'system' && (
+            <>
+              <View style={styles.divider} />
+              <Pressable accessibilityRole="button" onPress={() => setThemeMode('system')}>
+                <Text style={styles.systemLink}>Use system setting</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+
         <Pressable accessibilityRole="button" onPress={logout} style={styles.logoutButton}>
           <Text style={styles.logoutText}>Sign Out</Text>
         </Pressable>
@@ -53,109 +191,5 @@ function ProfileScreen() {
     </ScreenShell>
   );
 }
-
-const styles = StyleSheet.create({
-  profileCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 32,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 24,
-    alignItems: 'center',
-  },
-  badge: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#eed7be',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  badgeText: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '800',
-    color: colors.primaryDark,
-  },
-  eyebrow: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: colors.primaryDark,
-    marginBottom: 8,
-  },
-  name: {
-    fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  email: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.muted,
-    marginBottom: 28,
-  },
-  panel: {
-    width: '100%',
-    borderRadius: 24,
-    backgroundColor: colors.surfaceStrong,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 20,
-    marginBottom: 28,
-  },
-  panelTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 20,
-  },
-  rowLabel: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.muted,
-  },
-  rowValue: {
-    flex: 1,
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '700',
-    color: colors.text,
-    textAlign: 'right',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 14,
-  },
-  logoutButton: {
-    minHeight: 56,
-    minWidth: 160,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
-  logoutText: {
-    fontSize: 17,
-    lineHeight: 22,
-    fontWeight: '800',
-    color: colors.white,
-  },
-});
 
 export default ProfileScreen;
