@@ -36,7 +36,8 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
         canvas: {
           flexGrow: 1,
           paddingHorizontal: 18,
-          paddingVertical: 18,
+          paddingTop: 18,
+          paddingBottom: 90,
           backgroundColor: colors.background,
         },
       }),
