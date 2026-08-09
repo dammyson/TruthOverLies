@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
@@ -11,7 +12,9 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'Results'>;
 
 function ResultsScreen({navigation}: Props) {
   const {devotionCards, selectedFeelings, toggleSavedCard, isSaved} = useAppContext();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
+
+  const glassScheme = isDark ? 'dark' : 'light';
 
   const styles = useMemo(
     () =>
@@ -26,17 +29,23 @@ function ResultsScreen({navigation}: Props) {
           width: 36,
           height: 36,
           borderRadius: 18,
-          backgroundColor: colors.surface,
-          borderWidth: 1,
-          borderColor: colors.border,
           alignItems: 'center',
           justifyContent: 'center',
+          ...(!isLiquidGlassSupported && {
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }),
+        },
+        backGlass: {
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          borderRadius: 18,
         },
         backArrow: {
           fontSize: 18,
           lineHeight: 22,
           color: colors.primaryDark,
-          marginTop: -1,
         },
         selectedText: {
           flex: 1,
@@ -73,11 +82,20 @@ function ResultsScreen({navigation}: Props) {
         cardsSection: {
           gap: 12,
         },
-        devotionCard: {
-          backgroundColor: colors.surfaceStrong,
+        cardWrapper: {
           borderRadius: 20,
-          borderWidth: 1,
-          borderColor: colors.border,
+          ...(!isLiquidGlassSupported && {
+            backgroundColor: colors.surfaceStrong,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }),
+        },
+        cardGlass: {
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          borderRadius: 20,
+        },
+        cardContent: {
           padding: 14,
         },
         devotionTopRow: {
@@ -121,9 +139,16 @@ function ResultsScreen({navigation}: Props) {
           color: colors.muted,
           marginBottom: 12,
         },
-        verseBlock: {
-          backgroundColor: colors.surface,
+        verseWrapper: {
           borderRadius: 14,
+          ...(!isLiquidGlassSupported && {backgroundColor: colors.surface}),
+        },
+        verseGlass: {
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          borderRadius: 14,
+        },
+        verseContent: {
           padding: 12,
         },
         verseText: {
@@ -145,7 +170,13 @@ function ResultsScreen({navigation}: Props) {
   return (
     <ScreenShell>
       <View style={styles.headerRow}>
-        <Pressable accessibilityRole="button" onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}>
+          {isLiquidGlassSupported && (
+            <LiquidGlassView style={styles.backGlass} effect="clear" colorScheme={glassScheme} />
+          )}
           <Text style={styles.backArrow}>←</Text>
         </Pressable>
         <Text style={styles.selectedText}>{selectedFeelings.join(', ')}</Text>
@@ -162,24 +193,33 @@ function ResultsScreen({navigation}: Props) {
       <View style={styles.cardsSection}>
         {devotionCards.map(card => {
           const saved = isSaved(card.id);
-
           return (
-            <View key={card.id} style={styles.devotionCard}>
-              <View style={styles.devotionTopRow}>
-                <Text style={styles.devotionTitle}>{card.title}</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => toggleSavedCard(card)}
-                  style={[styles.saveButton, saved ? styles.saveButtonActive : null]}>
-                  <Text style={[styles.saveButtonText, saved ? styles.saveButtonTextActive : null]}>
-                    {saved ? 'Saved' : 'Save'}
-                  </Text>
-                </Pressable>
-              </View>
-              <Text style={styles.devotionBody}>{card.encouragement}</Text>
-              <View style={styles.verseBlock}>
-                <Text style={styles.verseText}>{card.verse}</Text>
-                <Text style={styles.referenceText}>{card.reference}</Text>
+            <View key={card.id} style={styles.cardWrapper}>
+              {isLiquidGlassSupported && (
+                <LiquidGlassView style={styles.cardGlass} effect="regular" colorScheme={glassScheme} />
+              )}
+              <View style={styles.cardContent}>
+                <View style={styles.devotionTopRow}>
+                  <Text style={styles.devotionTitle}>{card.title}</Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => toggleSavedCard(card)}
+                    style={[styles.saveButton, saved ? styles.saveButtonActive : null]}>
+                    <Text style={[styles.saveButtonText, saved ? styles.saveButtonTextActive : null]}>
+                      {saved ? 'Saved' : 'Save'}
+                    </Text>
+                  </Pressable>
+                </View>
+                <Text style={styles.devotionBody}>{card.encouragement}</Text>
+                <View style={styles.verseWrapper}>
+                  {isLiquidGlassSupported && (
+                    <LiquidGlassView style={styles.verseGlass} effect="clear" colorScheme={glassScheme} />
+                  )}
+                  <View style={styles.verseContent}>
+                    <Text style={styles.verseText}>{card.verse}</Text>
+                    <Text style={styles.referenceText}>{card.reference}</Text>
+                  </View>
+                </View>
               </View>
             </View>
           );

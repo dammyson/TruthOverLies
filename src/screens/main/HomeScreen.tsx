@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
@@ -22,7 +23,7 @@ function HomeScreen({navigation}: Props) {
     toggleFeeling,
     generateDevotions,
   } = useAppContext();
-  const {colors} = useTheme();
+  const {colors, isDark} = useTheme();
   const {isTransitioning, runWithTransition} = useTransitionAction();
 
   const styles = useMemo(
@@ -52,13 +53,25 @@ function HomeScreen({navigation}: Props) {
           lineHeight: 24,
           color: colors.muted,
         },
-        panel: {
-          backgroundColor: colors.surface,
+        panelWrapper: {
           borderRadius: 24,
+          marginBottom: 16,
+        },
+        panelFallback: {
+          backgroundColor: colors.surface,
           borderWidth: 1,
           borderColor: colors.border,
+        },
+        glassBackground: {
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 24,
+        },
+        panelContent: {
           padding: 16,
-          marginBottom: 16,
         },
         panelHeader: {
           flexDirection: 'row',
@@ -120,44 +133,51 @@ function HomeScreen({navigation}: Props) {
 
       <MessageBanner message={authMessage} tone={authMessageTone} />
 
-      <View style={styles.panel}>
-        <View style={styles.panelHeader}>
-          <Text style={styles.panelTitle}>Select feelings</Text>
-          <Text style={styles.counter}>{selectedFeelings.length}/4</Text>
+      <View style={[styles.panelWrapper, !isLiquidGlassSupported && styles.panelFallback]}>
+        {isLiquidGlassSupported && (
+          <LiquidGlassView
+            style={styles.glassBackground}
+            effect="regular"
+            colorScheme={isDark ? 'dark' : 'light'}
+          />
+        )}
+        <View style={styles.panelContent}>
+          <View style={styles.panelHeader}>
+            <Text style={styles.panelTitle}>Select feelings</Text>
+            <Text style={styles.counter}>{selectedFeelings.length}/4</Text>
+          </View>
+          <View style={styles.feelingsWrap}>
+            {feelingOptions.map(feeling => {
+              const active = selectedFeelings.includes(feeling);
+              return (
+                <Pressable
+                  accessibilityRole="button"
+                  key={feeling}
+                  onPress={() => {
+                    clearAuthMessage();
+                    toggleFeeling(feeling);
+                  }}
+                  style={[styles.feelingChip, active ? styles.feelingChipActive : null]}>
+                  <Text style={[styles.feelingText, active ? styles.feelingTextActive : null]}>
+                    {feeling}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <PrimaryButton
+            label="Continue"
+            loading={isTransitioning}
+            onPress={() => {
+              runWithTransition(() => {
+                const generated = generateDevotions();
+                if (generated) {
+                  navigation.navigate('Results');
+                }
+              });
+            }}
+          />
         </View>
-        <View style={styles.feelingsWrap}>
-          {feelingOptions.map(feeling => {
-            const active = selectedFeelings.includes(feeling);
-
-            return (
-              <Pressable
-                accessibilityRole="button"
-                key={feeling}
-                onPress={() => {
-                  clearAuthMessage();
-                  toggleFeeling(feeling);
-                }}
-                style={[styles.feelingChip, active ? styles.feelingChipActive : null]}>
-                <Text style={[styles.feelingText, active ? styles.feelingTextActive : null]}>
-                  {feeling}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <PrimaryButton
-          label="Continue"
-          loading={isTransitioning}
-          onPress={() => {
-            runWithTransition(() => {
-              const generated = generateDevotions();
-
-              if (generated) {
-                navigation.navigate('Results');
-              }
-            });
-          }}
-        />
       </View>
     </ScreenShell>
   );
