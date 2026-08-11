@@ -1,6 +1,7 @@
 import React, {useMemo} from 'react';
 import {Pressable, StyleSheet, Switch, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
+import LinearGradient from 'react-native-linear-gradient';
 
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
@@ -32,13 +33,21 @@ function ProfileScreen() {
           alignItems: 'center',
         },
         badge: {
-          width: 70, height: 70, borderRadius: 35,
-          backgroundColor: colors.badgeBg,
+          width: 84, height: 84, borderRadius: 42,
           alignItems: 'center', justifyContent: 'center',
-          marginBottom: 14,
+          marginBottom: 16,
+          overflow: 'hidden',
+          ...(!isLiquidGlassSupported && {
+            backgroundColor: colors.badgeBg,
+          }),
+        },
+        badgeGlass: {
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          borderRadius: 42,
         },
         badgeText: {
-          fontSize: 22, lineHeight: 28,
+          fontSize: 26, lineHeight: 32,
           fontWeight: '800', color: colors.primaryDark,
         },
         eyebrow: {
@@ -122,9 +131,23 @@ function ProfileScreen() {
         )}
         <View style={styles.outerContent}>
           <View style={styles.badge}>
+            {isLiquidGlassSupported && (
+              <LiquidGlassView
+                style={styles.badgeGlass}
+                effect="regular"
+                colorScheme={glassScheme}
+              />
+            )}
+            {!isDark && (
+              <LinearGradient
+                colors={['rgba(255,255,255,0.88)', 'rgba(74,47,36,0.28)']}
+                start={{x: 0, y: 0}}
+                end={{x: 0, y: 1}}
+                style={styles.badgeGlass}
+              />
+            )}
             <Text style={styles.badgeText}>{initials || 'GP'}</Text>
           </View>
-          <Text style={styles.eyebrow}>Simple Profile</Text>
           <Text style={styles.name}>{currentUser.fullName}</Text>
           <Text style={styles.email}>{currentUser.email}</Text>
 

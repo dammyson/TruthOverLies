@@ -3,6 +3,7 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
+import GlassBackButton from '../../components/GlassBackButton';
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
@@ -24,28 +25,6 @@ function ResultsScreen({navigation}: Props) {
           alignItems: 'center',
           justifyContent: 'space-between',
           marginBottom: 12,
-        },
-        backButton: {
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          alignItems: 'center',
-          justifyContent: 'center',
-          ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }),
-        },
-        backGlass: {
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 18,
-        },
-        backArrow: {
-          fontSize: 18,
-          lineHeight: 22,
-          color: colors.primaryDark,
         },
         selectedText: {
           flex: 1,
@@ -170,15 +149,7 @@ function ResultsScreen({navigation}: Props) {
   return (
     <ScreenShell>
       <View style={styles.headerRow}>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          {isLiquidGlassSupported && (
-            <LiquidGlassView style={styles.backGlass} effect="clear" colorScheme={glassScheme} />
-          )}
-          <Text style={styles.backArrow}>←</Text>
-        </Pressable>
+        <GlassBackButton onPress={() => navigation.goBack()} />
         <Text style={styles.selectedText}>{selectedFeelings.join(', ')}</Text>
       </View>
 
