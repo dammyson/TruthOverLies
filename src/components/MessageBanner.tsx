@@ -2,6 +2,8 @@ import React, {useMemo} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 
 import {useTheme} from '../context/ThemeContext';
+import {typography} from '../theme/typography';
+import {radius, spacing} from '../theme/spacing';
 import {AuthMessageTone} from '../types/app';
 
 type MessageBannerProps = {
@@ -16,28 +18,19 @@ function MessageBanner({message, tone}: MessageBannerProps) {
     () =>
       StyleSheet.create({
         container: {
-          borderRadius: 12,
-          paddingHorizontal: 12,
-          paddingVertical: 10,
-          marginBottom: 12,
+          borderRadius: radius.sm,
+          paddingHorizontal: spacing.sm + 4,
+          paddingVertical: spacing.sm,
+          marginBottom: spacing.sm + 4,
         },
-        containerError: {
-          backgroundColor: colors.errorBg,
-        },
-        containerSuccess: {
-          backgroundColor: colors.successBg,
-        },
+        containerError: {backgroundColor: colors.errorBg},
+        containerSuccess: {backgroundColor: colors.successBg},
         text: {
-          fontSize: 13,
-          lineHeight: 18,
+          ...typography.footnote,
           fontWeight: '600',
         },
-        textError: {
-          color: colors.errorText,
-        },
-        textSuccess: {
-          color: colors.successText,
-        },
+        textError: {color: colors.errorText},
+        textSuccess: {color: colors.successText},
       }),
     [colors],
   );

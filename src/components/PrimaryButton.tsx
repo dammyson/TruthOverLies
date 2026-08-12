@@ -2,6 +2,8 @@ import React, {useMemo} from 'react';
 import {ActivityIndicator, Pressable, StyleSheet, Text} from 'react-native';
 
 import {useTheme} from '../context/ThemeContext';
+import {typography} from '../theme/typography';
+import {radius, spacing} from '../theme/spacing';
 
 type PrimaryButtonProps = {
   label: string;
@@ -17,26 +19,22 @@ function PrimaryButton({label, onPress, disabled = false, loading = false}: Prim
     () =>
       StyleSheet.create({
         button: {
-          marginTop: 14,
-          marginBottom: 12,
-          minHeight: 52,
-          borderRadius: 16,
+          marginTop: spacing.md,
+          marginBottom: spacing.sm,
+          minHeight: 50,
+          borderRadius: radius.lg,
           backgroundColor: colors.primary,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: '#b06f3c',
+          shadowColor: colors.shadow,
           shadowOpacity: 0.18,
           shadowRadius: 12,
-          shadowOffset: {width: 0, height: 8},
+          shadowOffset: {width: 0, height: 6},
           elevation: 4,
         },
-        buttonDisabled: {
-          opacity: 0.82,
-        },
+        buttonDisabled: {opacity: 0.75},
         label: {
-          fontSize: 16,
-          lineHeight: 22,
-          fontWeight: '800',
+          ...typography.headline,
           color: colors.white,
         },
       }),
@@ -48,8 +46,12 @@ function PrimaryButton({label, onPress, disabled = false, loading = false}: Prim
       accessibilityRole="button"
       disabled={disabled || loading}
       onPress={onPress}
-      style={[styles.button, disabled || loading ? styles.buttonDisabled : null]}>
-      {loading ? <ActivityIndicator color={colors.white} /> : <Text style={styles.label}>{label}</Text>}
+      style={[styles.button, (disabled || loading) && styles.buttonDisabled]}>
+      {loading ? (
+        <ActivityIndicator color={colors.white} />
+      ) : (
+        <Text style={styles.label}>{label}</Text>
+      )}
     </Pressable>
   );
 }

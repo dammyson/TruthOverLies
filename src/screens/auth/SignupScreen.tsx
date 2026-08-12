@@ -81,9 +81,7 @@ function SignupScreen({ navigation }: Props) {
           label="Create Account"
           loading={isTransitioning}
           onPress={() => {
-            runWithTransition(() => {
-              signup(fullName, email, password);
-            });
+            runWithTransition(() => signup(fullName, email, password));
           }}
         />
         <Pressable

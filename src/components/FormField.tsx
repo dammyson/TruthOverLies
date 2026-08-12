@@ -2,6 +2,8 @@ import React, {useMemo} from 'react';
 import {StyleSheet, Text, TextInput, TextInputProps, View} from 'react-native';
 
 import {useTheme} from '../context/ThemeContext';
+import {typography} from '../theme/typography';
+import {radius, spacing} from '../theme/spacing';
 
 type FormFieldProps = {
   label: string;
@@ -21,24 +23,21 @@ function FormField({label, ...inputProps}: FormFieldProps) {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        fieldGroup: {
-          marginBottom: 12,
-        },
+        fieldGroup: {marginBottom: spacing.sm + 4},
         fieldLabel: {
-          fontSize: 13,
-          lineHeight: 18,
-          color: colors.primaryDark,
+          ...typography.footnote,
           fontWeight: '700',
-          marginBottom: 6,
+          color: colors.primaryDark,
+          marginBottom: spacing.xs,
         },
         input: {
-          height: 50,
-          borderRadius: 14,
+          height: 44,
+          borderRadius: radius.sm,
           borderWidth: 1,
           borderColor: colors.border,
           backgroundColor: colors.surfaceSoft,
-          paddingHorizontal: 16,
-          fontSize: 15,
+          paddingHorizontal: spacing.md,
+          ...typography.body,
           color: colors.text,
         },
       }),

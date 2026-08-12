@@ -1,9 +1,11 @@
 export type AuthMessageTone = 'error' | 'success';
 
 export type AuthUser = {
+  id: number;
   fullName: string;
   email: string;
-  password: string;
+  role: string;
+  createdAt: string;
 };
 
 export type FeelingOption =

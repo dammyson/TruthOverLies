@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import {useTheme} from '../context/ThemeContext';
+import {spacing} from '../theme/spacing';
 
 type ScreenShellProps = {
   children: ReactNode;
@@ -27,17 +28,13 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
           flex: 1,
           backgroundColor: colors.background,
         },
-        flex: {
-          flex: 1,
-        },
-        scrollContent: {
-          flexGrow: 1,
-        },
+        flex: {flex: 1},
+        scrollContent: {flexGrow: 1},
         canvas: {
           flexGrow: 1,
-          paddingHorizontal: 18,
-          paddingTop: 18,
-          paddingBottom: 90,
+          paddingHorizontal: spacing.md + 2,
+          paddingTop: spacing.md + 2,
+          paddingBottom: 100,
           backgroundColor: colors.background,
         },
       }),
@@ -46,7 +43,7 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
 
   const content = scrollable ? (
     <ScrollView
-      bounces={false}
+      contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled">
       <View style={styles.canvas}>{children}</View>

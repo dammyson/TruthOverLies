@@ -10,6 +10,8 @@ import {feelingOptions} from '../../data/devotions';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import useTransitionAction from '../../hooks/useTransitionAction';
+import {typography} from '../../theme/typography';
+import {radius, spacing} from '../../theme/spacing';
 import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
@@ -29,33 +31,25 @@ function HomeScreen({navigation}: Props) {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        header: {
-          marginBottom: 14,
-        },
+        header: {marginBottom: spacing.md},
         eyebrow: {
-          fontSize: 14,
-          lineHeight: 18,
-          fontWeight: '700',
-          letterSpacing: 1,
-          textTransform: 'uppercase',
+          ...typography.eyebrow,
           color: colors.primaryDark,
-          marginBottom: 8,
+          marginBottom: spacing.sm,
         },
         title: {
-          fontSize: 34,
-          lineHeight: 40,
-          fontWeight: '800',
+          ...typography.largeTitle,
+          fontWeight: '700',
           color: colors.text,
-          marginBottom: 8,
+          marginBottom: spacing.sm,
         },
         subtitle: {
-          fontSize: 16,
-          lineHeight: 24,
+          ...typography.callout,
           color: colors.muted,
         },
         panelWrapper: {
-          borderRadius: 24,
-          marginBottom: 16,
+          borderRadius: radius.xxl,
+          marginBottom: spacing.md,
         },
         panelFallback: {
           backgroundColor: colors.surface,
@@ -63,60 +57,50 @@ function HomeScreen({navigation}: Props) {
           borderColor: colors.border,
         },
         glassBackground: {
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: 24,
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.xxl,
         },
-        panelContent: {
-          padding: 16,
-        },
+        panelContent: {padding: spacing.md},
         panelHeader: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 12,
+          marginBottom: spacing.sm + 4,
         },
         panelTitle: {
-          fontSize: 16,
-          lineHeight: 22,
-          fontWeight: '800',
+          ...typography.headline,
           color: colors.text,
         },
         counter: {
-          fontSize: 13,
-          lineHeight: 18,
-          color: colors.primaryDark,
+          ...typography.footnote,
           fontWeight: '700',
+          color: colors.primaryDark,
         },
         feelingsWrap: {
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: 8,
+          gap: spacing.sm,
         },
         feelingChip: {
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          borderRadius: 14,
+          paddingHorizontal: spacing.sm + 4,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.md,
           backgroundColor: colors.surfaceStrong,
           borderWidth: 1,
           borderColor: colors.border,
+          minHeight: 44,
+          justifyContent: 'center',
         },
         feelingChipActive: {
           backgroundColor: colors.primary,
           borderColor: colors.primary,
         },
         feelingText: {
-          color: colors.text,
-          fontSize: 14,
-          lineHeight: 18,
+          ...typography.subhead,
           fontWeight: '600',
+          color: colors.text,
         },
-        feelingTextActive: {
-          color: colors.white,
-        },
+        feelingTextActive: {color: colors.white},
       }),
     [colors],
   );
@@ -157,8 +141,8 @@ function HomeScreen({navigation}: Props) {
                     clearAuthMessage();
                     toggleFeeling(feeling);
                   }}
-                  style={[styles.feelingChip, active ? styles.feelingChipActive : null]}>
-                  <Text style={[styles.feelingText, active ? styles.feelingTextActive : null]}>
+                  style={[styles.feelingChip, active && styles.feelingChipActive]}>
+                  <Text style={[styles.feelingText, active && styles.feelingTextActive]}>
                     {feeling}
                   </Text>
                 </Pressable>
