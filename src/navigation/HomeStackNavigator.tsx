@@ -21,7 +21,7 @@ function HomeStackNavigator() {
         headerShown: false,
         contentStyle: {backgroundColor: colors.background},
       }}>
-      <Stack.Screen component={HomeScreen} name="HomeMain" />
+      <Stack.Screen component={HomeScreen} name="HomeMain" options={{headerBackTitle: '', title: ''}} />
       <Stack.Screen
         component={ResultsScreen}
         name="Results"
