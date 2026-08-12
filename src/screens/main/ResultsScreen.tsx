@@ -3,66 +3,47 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
-import GlassBackButton from '../../components/GlassBackButton';
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
+import {typography} from '../../theme/typography';
+import {radius, spacing} from '../../theme/spacing';
 import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'Results'>;
 
-function ResultsScreen({navigation}: Props) {
+function ResultsScreen() {
   const {devotionCards, selectedFeelings, toggleSavedCard, isSaved} = useAppContext();
   const {colors, isDark} = useTheme();
-
   const glassScheme = isDark ? 'dark' : 'light';
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        headerRow: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 12,
-        },
         selectedText: {
-          flex: 1,
-          marginLeft: 12,
-          textAlign: 'right',
-          fontSize: 12,
-          lineHeight: 16,
+          ...typography.caption1,
           color: colors.muted,
+          marginBottom: spacing.sm,
         },
-        header: {
-          marginBottom: 16,
-        },
+        header: {marginBottom: spacing.md},
         eyebrow: {
-          fontSize: 12,
-          lineHeight: 16,
-          fontWeight: '700',
-          letterSpacing: 1,
-          textTransform: 'uppercase',
+          ...typography.eyebrow,
           color: colors.primaryDark,
-          marginBottom: 6,
+          marginBottom: spacing.xs,
         },
         title: {
-          fontSize: 24,
-          lineHeight: 30,
-          fontWeight: '800',
+          ...typography.title2,
+          fontWeight: '700',
           color: colors.text,
-          marginBottom: 6,
+          marginBottom: spacing.xs,
         },
         subtitle: {
-          fontSize: 14,
-          lineHeight: 20,
+          ...typography.subhead,
           color: colors.muted,
         },
-        cardsSection: {
-          gap: 12,
-        },
+        cardsSection: {gap: spacing.sm},
         cardWrapper: {
-          borderRadius: 20,
+          borderRadius: radius.xl,
           ...(!isLiquidGlassSupported && {
             backgroundColor: colors.surfaceStrong,
             borderWidth: 1,
@@ -70,33 +51,29 @@ function ResultsScreen({navigation}: Props) {
           }),
         },
         cardGlass: {
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 20,
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.xl,
         },
-        cardContent: {
-          padding: 14,
-        },
+        cardContent: {padding: spacing.md},
         devotionTopRow: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: 8,
-          gap: 10,
+          marginBottom: spacing.sm,
+          gap: spacing.sm,
         },
         devotionTitle: {
           flex: 1,
-          fontSize: 16,
-          lineHeight: 22,
-          fontWeight: '800',
+          ...typography.headline,
+          fontWeight: '700',
           color: colors.text,
         },
         saveButton: {
-          borderRadius: 999,
+          borderRadius: radius.full,
           borderWidth: 1,
           borderColor: colors.border,
-          paddingHorizontal: 10,
-          paddingVertical: 6,
+          paddingHorizontal: spacing.sm + 2,
+          paddingVertical: spacing.xs + 2,
           backgroundColor: colors.surface,
         },
         saveButtonActive: {
@@ -104,41 +81,32 @@ function ResultsScreen({navigation}: Props) {
           borderColor: colors.primary,
         },
         saveButtonText: {
-          fontSize: 12,
-          lineHeight: 16,
+          ...typography.caption1,
           fontWeight: '700',
           color: colors.primaryDark,
         },
-        saveButtonTextActive: {
-          color: colors.white,
-        },
+        saveButtonTextActive: {color: colors.white},
         devotionBody: {
-          fontSize: 14,
-          lineHeight: 22,
+          ...typography.subhead,
           color: colors.muted,
-          marginBottom: 12,
+          marginBottom: spacing.sm,
         },
         verseWrapper: {
-          borderRadius: 14,
+          borderRadius: radius.md,
           ...(!isLiquidGlassSupported && {backgroundColor: colors.surface}),
         },
         verseGlass: {
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 14,
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.md,
         },
-        verseContent: {
-          padding: 12,
-        },
+        verseContent: {padding: spacing.sm + 4},
         verseText: {
-          fontSize: 14,
-          lineHeight: 22,
+          ...typography.subhead,
           color: colors.text,
-          marginBottom: 6,
+          marginBottom: spacing.xs,
         },
         referenceText: {
-          fontSize: 12,
-          lineHeight: 16,
+          ...typography.caption1,
           fontWeight: '700',
           color: colors.primaryDark,
         },
@@ -148,11 +116,6 @@ function ResultsScreen({navigation}: Props) {
 
   return (
     <ScreenShell>
-      <View style={styles.headerRow}>
-        <GlassBackButton onPress={() => navigation.goBack()} />
-        <Text style={styles.selectedText}>{selectedFeelings.join(', ')}</Text>
-      </View>
-
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Your result</Text>
         <Text style={styles.title}>Scripture for this moment</Text>
@@ -160,6 +123,10 @@ function ResultsScreen({navigation}: Props) {
           Receive these verses and words of encouragement for what you are carrying today.
         </Text>
       </View>
+
+      {selectedFeelings.length > 0 && (
+        <Text style={styles.selectedText}>{selectedFeelings.join(' · ')}</Text>
+      )}
 
       <View style={styles.cardsSection}>
         {devotionCards.map(card => {
@@ -175,8 +142,8 @@ function ResultsScreen({navigation}: Props) {
                   <Pressable
                     accessibilityRole="button"
                     onPress={() => toggleSavedCard(card)}
-                    style={[styles.saveButton, saved ? styles.saveButtonActive : null]}>
-                    <Text style={[styles.saveButtonText, saved ? styles.saveButtonTextActive : null]}>
+                    style={[styles.saveButton, saved && styles.saveButtonActive]}>
+                    <Text style={[styles.saveButtonText, saved && styles.saveButtonTextActive]}>
                       {saved ? 'Saved' : 'Save'}
                     </Text>
                   </Pressable>

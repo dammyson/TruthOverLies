@@ -3,6 +3,8 @@ import {StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import {useTheme} from '../context/ThemeContext';
+import {typography} from '../theme/typography';
+import {radius, spacing} from '../theme/spacing';
 
 type AuthCardProps = {
   title: string;
@@ -16,62 +18,48 @@ function AuthCard({title, subtitle, children}: AuthCardProps) {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        heroBlock: {
-          marginBottom: 12,
-        },
+        heroBlock: {marginBottom: spacing.sm + 4},
         eyebrow: {
-          fontSize: 12,
-          lineHeight: 16,
-          fontWeight: '700',
-          letterSpacing: 1,
-          textTransform: 'uppercase',
+          ...typography.eyebrow,
           color: colors.primaryDark,
-          marginBottom: 6,
+          marginBottom: spacing.sm,
         },
         heroTitle: {
-          fontSize: 34,
-          lineHeight: 40,
-          fontWeight: '800',
+          ...typography.largeTitle,
+          fontWeight: '700',
           color: colors.text,
           maxWidth: 300,
-          marginBottom: 8,
+          marginBottom: spacing.sm,
         },
         cardWrapper: {
           width: '100%',
           maxWidth: 420,
           alignSelf: 'center',
-          borderRadius: 28,
+          borderRadius: radius.xxl,
         },
         glassBackground: {
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          borderRadius: 28,
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.xxl,
         },
         cardFallback: {
-          borderRadius: 28,
           borderWidth: 1,
           borderColor: colors.border,
           backgroundColor: colors.surface,
         },
         cardContent: {
-          paddingHorizontal: 20,
-          paddingVertical: 16,
+          paddingHorizontal: spacing.md + 4,
+          paddingVertical: spacing.md,
         },
         title: {
-          fontSize: 24,
-          lineHeight: 30,
-          fontWeight: '800',
+          ...typography.title2,
+          fontWeight: '700',
           color: colors.text,
-          marginBottom: 4,
+          marginBottom: spacing.xs,
         },
         subtitle: {
-          fontSize: 14,
-          lineHeight: 20,
+          ...typography.subhead,
           color: colors.muted,
-          marginBottom: 14,
+          marginBottom: spacing.md,
         },
       }),
     [colors],

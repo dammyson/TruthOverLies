@@ -1,28 +1,23 @@
-import {useEffect, useRef, useState} from 'react';
+import {useRef, useState} from 'react';
 
-function useTransitionAction(delay = 250) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+function useTransitionAction() {
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const activeRef = useRef(false);
 
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
-
-  const runWithTransition = (action: () => void) => {
-    if (isTransitioning) {
+  const runWithTransition = async (action: () => Promise<unknown> | void) => {
+    if (activeRef.current) {
       return;
     }
 
+    activeRef.current = true;
     setIsTransitioning(true);
-    timeoutRef.current = setTimeout(() => {
-      action();
+
+    try {
+      await action();
+    } finally {
+      activeRef.current = false;
       setIsTransitioning(false);
-      timeoutRef.current = null;
-    }, delay);
+    }
   };
 
   return {isTransitioning, runWithTransition};

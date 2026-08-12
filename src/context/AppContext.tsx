@@ -1,19 +1,32 @@
-import React, {createContext, ReactNode, useContext, useMemo, useState} from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
+import * as authApi from '../api/auth';
+import {ApiError} from '../api/types';
+import storage from '../cache/storage';
+import CACHE_KEYS from '../cache/keys';
 import {buildDevotions} from '../data/devotions';
 import {AuthMessageTone, AuthUser, DevotionCard, FeelingOption} from '../types/app';
 
 type AppContextValue = {
   currentUser: AuthUser | null;
+  authToken: string | null;
+  isInitialising: boolean;
   authMessage: string;
   authMessageTone: AuthMessageTone;
   selectedFeelings: FeelingOption[];
   devotionCards: DevotionCard[];
   savedCards: DevotionCard[];
-  login: (email: string, password: string) => boolean;
-  loginAsGuest: () => void;
-  signup: (fullName: string, email: string, password: string) => boolean;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  loginAsGuest: () => Promise<void>;
+  signup: (fullName: string, email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
   clearAuthMessage: () => void;
   toggleFeeling: (feeling: FeelingOption) => void;
   generateDevotions: () => boolean;
@@ -24,8 +37,9 @@ type AppContextValue = {
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 function AppProvider({children}: {children: ReactNode}) {
-  const [users, setUsers] = useState<AuthUser[]>([]);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [isInitialising, setIsInitialising] = useState(true);
   const [authMessage, setAuthMessage] = useState('');
   const [authMessageTone, setAuthMessageTone] = useState<AuthMessageTone>('error');
   const [selectedFeelings, setSelectedFeelings] = useState<FeelingOption[]>(['Hopeful']);
@@ -34,11 +48,50 @@ function AppProvider({children}: {children: ReactNode}) {
   );
   const [savedCards, setSavedCards] = useState<DevotionCard[]>([]);
 
-  const clearAuthMessage = () => {
-    setAuthMessage('');
-  };
+  // Restore session from cache on startup
+  useEffect(() => {
+    async function restoreSession() {
+      const [token, profile] = await Promise.all([
+        storage.get<string>(CACHE_KEYS.AUTH_TOKEN),
+        storage.get<AuthUser>(CACHE_KEYS.USER_PROFILE),
+      ]);
 
-  const login = (email: string, password: string) => {
+      if (token && profile) {
+        setAuthToken(token);
+        setCurrentUser(profile);
+
+        // Refresh profile in background; silent fail on network error
+        authApi.getMe(token).then(me => {
+          const refreshed: AuthUser = {
+            id: me.id,
+            fullName: me.full_name,
+            email: me.email,
+            role: me.role,
+            createdAt: me.created_at,
+          };
+          setCurrentUser(refreshed);
+          storage.set(CACHE_KEYS.USER_PROFILE, refreshed);
+        }).catch(() => {});
+      }
+
+      setIsInitialising(false);
+    }
+
+    restoreSession();
+  }, []);
+
+  const clearAuthMessage = () => setAuthMessage('');
+
+  async function persistSession(token: string, user: AuthUser) {
+    setAuthToken(token);
+    setCurrentUser(user);
+    await Promise.all([
+      storage.set(CACHE_KEYS.AUTH_TOKEN, token),
+      storage.set(CACHE_KEYS.USER_PROFILE, user),
+    ]);
+  }
+
+  const login = async (email: string, password: string): Promise<boolean> => {
     clearAuthMessage();
 
     if (!email.trim() || !password.trim()) {
@@ -47,35 +100,52 @@ function AppProvider({children}: {children: ReactNode}) {
       return false;
     }
 
-    const matchedUser = users.find(
-      user => user.email.toLowerCase() === email.trim().toLowerCase() && user.password === password,
-    );
-
-    if (!matchedUser) {
+    try {
+      const res = await authApi.login(email.trim().toLowerCase(), password);
+      const user: AuthUser = {
+        id: res.id,
+        fullName: res.full_name,
+        email: res.email,
+        role: 'user',
+        createdAt: new Date().toISOString(),
+      };
+      await persistSession(res.auth_token, user);
+      setAuthMessageTone('success');
+      setAuthMessage('Welcome back.');
+      return true;
+    } catch (err) {
       setAuthMessageTone('error');
-      setAuthMessage('Incorrect email or password.');
+      setAuthMessage(err instanceof ApiError ? err.message : 'Something went wrong. Try again.');
       return false;
     }
-
-    setCurrentUser(matchedUser);
-    setAuthMessageTone('success');
-    setAuthMessage('Welcome back.');
-    return true;
   };
 
-  const loginAsGuest = () => {
+  const loginAsGuest = async (): Promise<void> => {
     clearAuthMessage();
 
-    setCurrentUser({
-      fullName: 'Guest User',
-      email: 'guest@godsplace.app',
-      password: '',
-    });
-    setAuthMessageTone('success');
-    setAuthMessage('Continuing as guest.');
+    try {
+      const res = await authApi.guestLogin();
+      const user: AuthUser = {
+        id: res.id,
+        fullName: res.full_name || 'Guest User',
+        email: res.email,
+        role: 'guest',
+        createdAt: new Date().toISOString(),
+      };
+      await persistSession(res.auth_token, user);
+      setAuthMessageTone('success');
+      setAuthMessage('Continuing as guest.');
+    } catch (err) {
+      setAuthMessageTone('error');
+      setAuthMessage(err instanceof ApiError ? err.message : 'Could not start guest session.');
+    }
   };
 
-  const signup = (fullName: string, email: string, password: string) => {
+  const signup = async (
+    fullName: string,
+    email: string,
+    password: string,
+  ): Promise<boolean> => {
     clearAuthMessage();
 
     if (!fullName.trim() || !email.trim() || !password.trim()) {
@@ -84,46 +154,46 @@ function AppProvider({children}: {children: ReactNode}) {
       return false;
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const alreadyExists = users.some(user => user.email.toLowerCase() === normalizedEmail);
-
-    if (alreadyExists) {
+    try {
+      const res = await authApi.register(fullName.trim(), email.trim().toLowerCase(), password);
+      const user: AuthUser = {
+        id: res.id,
+        fullName: res.full_name,
+        email: res.email,
+        role: 'user',
+        createdAt: new Date().toISOString(),
+      };
+      await persistSession(res.auth_token, user);
+      setAuthMessageTone('success');
+      setAuthMessage('Account created successfully.');
+      return true;
+    } catch (err) {
       setAuthMessageTone('error');
-      setAuthMessage('That email is already registered.');
+      setAuthMessage(err instanceof ApiError ? err.message : 'Could not create account. Try again.');
       return false;
     }
-
-    const newUser: AuthUser = {
-      fullName: fullName.trim(),
-      email: normalizedEmail,
-      password,
-    };
-
-    setUsers(currentUsers => [...currentUsers, newUser]);
-    setCurrentUser(newUser);
-    setAuthMessageTone('success');
-    setAuthMessage('Account created successfully.');
-    return true;
   };
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
     setCurrentUser(null);
+    setAuthToken(null);
     clearAuthMessage();
+    await storage.clearKeys([CACHE_KEYS.AUTH_TOKEN, CACHE_KEYS.USER_PROFILE]);
   };
 
   const toggleFeeling = (feeling: FeelingOption) => {
-    setSelectedFeelings(currentFeelings => {
-      if (currentFeelings.includes(feeling)) {
-        return currentFeelings.filter(item => item !== feeling);
+    setSelectedFeelings(current => {
+      if (current.includes(feeling)) {
+        return current.filter(f => f !== feeling);
       }
 
-      if (currentFeelings.length >= 4) {
+      if (current.length >= 4) {
         setAuthMessageTone('error');
         setAuthMessage('You can select up to 4 feelings.');
-        return currentFeelings;
+        return current;
       }
 
-      return [...currentFeelings, feeling];
+      return [...current, feeling];
     });
   };
 
@@ -140,22 +210,19 @@ function AppProvider({children}: {children: ReactNode}) {
   };
 
   const toggleSavedCard = (card: DevotionCard) => {
-    setSavedCards(currentCards => {
-      const exists = currentCards.some(item => item.id === card.id);
-
-      if (exists) {
-        return currentCards.filter(item => item.id !== card.id);
-      }
-
-      return [card, ...currentCards];
+    setSavedCards(current => {
+      const exists = current.some(c => c.id === card.id);
+      return exists ? current.filter(c => c.id !== card.id) : [card, ...current];
     });
   };
 
-  const isSaved = (cardId: string) => savedCards.some(card => card.id === cardId);
+  const isSaved = (cardId: string) => savedCards.some(c => c.id === cardId);
 
   const value = useMemo(
     () => ({
       currentUser,
+      authToken,
+      isInitialising,
       authMessage,
       authMessageTone,
       selectedFeelings,
@@ -171,7 +238,8 @@ function AppProvider({children}: {children: ReactNode}) {
       toggleSavedCard,
       isSaved,
     }),
-    [authMessage, authMessageTone, currentUser, devotionCards, savedCards, selectedFeelings],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [authMessage, authMessageTone, authToken, currentUser, devotionCards, isInitialising, savedCards, selectedFeelings],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

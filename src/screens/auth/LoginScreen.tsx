@@ -95,18 +95,14 @@ function LoginScreen({ navigation }: Props) {
           label="Log In"
           loading={isLoggingIn}
           onPress={() => {
-            runLogin(() => {
-              login(email, password);
-            });
+            runLogin(() => login(email, password));
           }}
         />
         <Pressable
           accessibilityRole="button"
           disabled={isGuestLoading}
           onPress={() => {
-            runGuest(() => {
-              loginAsGuest();
-            });
+            runGuest(() => loginAsGuest());
           }}
           style={[
             styles.guestButton,

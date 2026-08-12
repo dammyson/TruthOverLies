@@ -6,6 +6,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
+import {typography} from '../../theme/typography';
+import {radius, spacing} from '../../theme/spacing';
 
 function ProfileScreen() {
   const {currentUser, logout, savedCards, selectedFeelings} = useAppContext();
@@ -16,7 +18,7 @@ function ProfileScreen() {
     () =>
       StyleSheet.create({
         outerWrapper: {
-          borderRadius: 28,
+          borderRadius: radius.xxl,
           ...(!isLiquidGlassSupported && {
             backgroundColor: colors.surface,
             borderWidth: 1,
@@ -24,49 +26,48 @@ function ProfileScreen() {
           }),
         },
         outerGlass: {
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 28,
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.xxl,
         },
         outerContent: {
-          padding: 18,
+          padding: spacing.md + 2,
           alignItems: 'center',
         },
-        badge: {
-          width: 84, height: 84, borderRadius: 42,
-          alignItems: 'center', justifyContent: 'center',
-          marginBottom: 16,
+        badgeWrapper: {
+          width: 72,
+          height: 72,
+          borderRadius: 36,
           overflow: 'hidden',
-          ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.badgeBg,
-          }),
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: spacing.md,
+          ...(!isLiquidGlassSupported && {backgroundColor: colors.badgeBg}),
         },
         badgeGlass: {
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 42,
+          ...StyleSheet.absoluteFill,
+          borderRadius: 36,
         },
         badgeText: {
-          fontSize: 26, lineHeight: 32,
-          fontWeight: '800', color: colors.primaryDark,
-        },
-        eyebrow: {
-          fontSize: 12, lineHeight: 16, fontWeight: '700',
-          letterSpacing: 1, textTransform: 'uppercase',
-          color: colors.primaryDark, marginBottom: 6,
+          ...typography.title3,
+          fontWeight: '700',
+          color: colors.primaryDark,
         },
         name: {
-          fontSize: 22, lineHeight: 28, fontWeight: '800',
-          color: colors.text, textAlign: 'center', marginBottom: 4,
+          ...typography.title2,
+          fontWeight: '700',
+          color: colors.text,
+          textAlign: 'center',
+          marginBottom: spacing.xs,
         },
         email: {
-          fontSize: 14, lineHeight: 20,
-          color: colors.muted, marginBottom: 16,
+          ...typography.subhead,
+          color: colors.muted,
+          marginBottom: spacing.md,
         },
         panelWrapper: {
           width: '100%',
-          borderRadius: 20,
-          marginBottom: 14,
+          borderRadius: radius.xl,
+          marginBottom: spacing.sm + 4,
           ...(!isLiquidGlassSupported && {
             backgroundColor: colors.surfaceStrong,
             borderWidth: 1,
@@ -74,40 +75,58 @@ function ProfileScreen() {
           }),
         },
         panelGlass: {
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          borderRadius: 20,
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.xl,
         },
-        panelContent: {padding: 16},
+        panelContent: {padding: spacing.md},
         panelTitle: {
-          fontSize: 15, lineHeight: 20, fontWeight: '800',
-          color: colors.text, marginBottom: 12,
+          ...typography.headline,
+          color: colors.text,
+          marginBottom: spacing.sm + 4,
         },
         row: {
-          flexDirection: 'row', alignItems: 'center',
-          justifyContent: 'space-between', gap: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing.sm,
+          minHeight: 44,
         },
-        rowLabel: {fontSize: 14, lineHeight: 20, color: colors.muted},
+        rowLabel: {
+          ...typography.subhead,
+          color: colors.muted,
+        },
         rowValue: {
-          flex: 1, fontSize: 14, lineHeight: 20,
-          fontWeight: '700', color: colors.text, textAlign: 'right',
+          flex: 1,
+          ...typography.subhead,
+          fontWeight: '600',
+          color: colors.text,
+          textAlign: 'right',
         },
         divider: {
-          height: 1, backgroundColor: colors.border, marginVertical: 10,
+          height: StyleSheet.hairlineWidth,
+          backgroundColor: colors.border,
+          marginVertical: spacing.xs,
         },
         systemLink: {
-          fontSize: 12, lineHeight: 16, color: colors.primary,
-          fontWeight: '600', marginTop: 6, textAlign: 'right',
+          ...typography.footnote,
+          fontWeight: '600',
+          color: colors.primary,
+          marginTop: spacing.xs,
+          textAlign: 'right',
         },
         logoutButton: {
-          minHeight: 48, minWidth: 140, borderRadius: 16,
+          minHeight: 50,
+          minWidth: 160,
+          borderRadius: radius.lg,
           backgroundColor: colors.primary,
-          alignItems: 'center', justifyContent: 'center',
-          paddingHorizontal: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: spacing.lg,
+          marginTop: spacing.xs,
         },
         logoutText: {
-          fontSize: 15, lineHeight: 20,
-          fontWeight: '800', color: colors.white,
+          ...typography.headline,
+          color: colors.white,
         },
       }),
     [colors],
@@ -130,7 +149,7 @@ function ProfileScreen() {
           <LiquidGlassView style={styles.outerGlass} effect="regular" colorScheme={glassScheme} />
         )}
         <View style={styles.outerContent}>
-          <View style={styles.badge}>
+          <View style={styles.badgeWrapper}>
             {isLiquidGlassSupported && (
               <LiquidGlassView
                 style={styles.badgeGlass}
@@ -148,6 +167,7 @@ function ProfileScreen() {
             )}
             <Text style={styles.badgeText}>{initials || 'GP'}</Text>
           </View>
+
           <Text style={styles.name}>{currentUser.fullName}</Text>
           <Text style={styles.email}>{currentUser.email}</Text>
 
