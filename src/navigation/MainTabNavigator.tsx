@@ -29,7 +29,7 @@ const routes = [
   },
   {
     key: 'profile',
-    title: 'Profile',
+    title: 'You',
     focusedIcon: {sfSymbol: 'person.fill'},
     unfocusedIcon: {sfSymbol: 'person'},
   },

@@ -1,6 +1,5 @@
 import React, {useMemo} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
-import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
@@ -8,9 +7,6 @@ import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
-import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
-
-type Props = NativeStackScreenProps<HomeStackParamList, 'Results'>;
 
 function ResultsScreen() {
   const {devotionCards, selectedFeelings, toggleSavedCard, isSaved} = useAppContext();
@@ -20,11 +16,6 @@ function ResultsScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        selectedText: {
-          ...typography.caption1,
-          color: colors.muted,
-          marginBottom: spacing.sm,
-        },
         header: {marginBottom: spacing.md},
         eyebrow: {
           ...typography.eyebrow,
@@ -35,11 +26,24 @@ function ResultsScreen() {
           ...typography.title2,
           fontWeight: '700',
           color: colors.text,
+          marginBottom: spacing.sm,
+        },
+        feelingPills: {
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: spacing.xs,
           marginBottom: spacing.xs,
         },
-        subtitle: {
-          ...typography.subhead,
-          color: colors.muted,
+        pill: {
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 3,
+          borderRadius: radius.full,
+          backgroundColor: colors.backgroundAccent,
+        },
+        pillText: {
+          ...typography.caption1,
+          fontWeight: '600',
+          color: colors.primaryDark,
         },
         cardsSection: {gap: spacing.sm},
         cardWrapper: {
@@ -55,26 +59,38 @@ function ResultsScreen() {
           borderRadius: radius.xl,
         },
         cardContent: {padding: spacing.md},
-        devotionTopRow: {
+        cardTopRow: {
           flexDirection: 'row',
+          alignItems: 'flex-start',
           justifyContent: 'space-between',
-          alignItems: 'center',
           marginBottom: spacing.sm,
           gap: spacing.sm,
         },
-        devotionTitle: {
+        cardMeta: {
           flex: 1,
+        },
+        cardBadge: {
+          ...typography.caption2,
+          fontWeight: '700',
+          color: colors.primaryDark,
+          letterSpacing: 1,
+          marginBottom: spacing.xs,
+        },
+        cardTitle: {
           ...typography.headline,
           fontWeight: '700',
           color: colors.text,
         },
         saveButton: {
-          borderRadius: radius.full,
+          width: 36,
+          height: 36,
+          borderRadius: 18,
           borderWidth: 1,
           borderColor: colors.border,
-          paddingHorizontal: spacing.sm + 2,
-          paddingVertical: spacing.xs + 2,
           backgroundColor: colors.surface,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginTop: 2,
         },
         saveButtonActive: {
           backgroundColor: colors.primary,
@@ -86,9 +102,15 @@ function ResultsScreen() {
           color: colors.primaryDark,
         },
         saveButtonTextActive: {color: colors.white},
-        devotionBody: {
+        cardBody: {
           ...typography.subhead,
           color: colors.muted,
+          marginBottom: spacing.md,
+          lineHeight: 22,
+        },
+        divider: {
+          height: StyleSheet.hairlineWidth,
+          backgroundColor: colors.border,
           marginBottom: spacing.sm,
         },
         verseWrapper: {
@@ -104,6 +126,7 @@ function ResultsScreen() {
           ...typography.subhead,
           color: colors.text,
           marginBottom: spacing.xs,
+          fontStyle: 'italic',
         },
         referenceText: {
           ...typography.caption1,
@@ -117,38 +140,49 @@ function ResultsScreen() {
   return (
     <ScreenShell>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Your result</Text>
-        <Text style={styles.title}>Scripture for this moment</Text>
-        <Text style={styles.subtitle}>
-          Receive these verses and words of encouragement for what you are carrying today.
-        </Text>
+        <Text style={styles.eyebrow}>Scripture for this moment</Text>
+        <Text style={styles.title}>Your Word for Today</Text>
+        {selectedFeelings.length > 0 && (
+          <View style={styles.feelingPills}>
+            {selectedFeelings.map(f => (
+              <View key={f} style={styles.pill}>
+                <Text style={styles.pillText}>{f}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
-      {selectedFeelings.length > 0 && (
-        <Text style={styles.selectedText}>{selectedFeelings.join(' · ')}</Text>
-      )}
-
       <View style={styles.cardsSection}>
-        {devotionCards.map(card => {
+        {devotionCards.map((card, index) => {
           const saved = isSaved(card.id);
+          const badge = String(index + 1).padStart(2, '0');
           return (
             <View key={card.id} style={styles.cardWrapper}>
               {isLiquidGlassSupported && (
                 <LiquidGlassView style={styles.cardGlass} effect="regular" colorScheme={glassScheme} />
               )}
               <View style={styles.cardContent}>
-                <View style={styles.devotionTopRow}>
-                  <Text style={styles.devotionTitle}>{card.title}</Text>
+                <View style={styles.cardTopRow}>
+                  <View style={styles.cardMeta}>
+                    <Text style={styles.cardBadge}>{badge}</Text>
+                    <Text style={styles.cardTitle}>{card.title}</Text>
+                  </View>
                   <Pressable
                     accessibilityRole="button"
+                    accessibilityLabel={saved ? 'Remove from saved' : 'Save'}
                     onPress={() => toggleSavedCard(card)}
                     style={[styles.saveButton, saved && styles.saveButtonActive]}>
                     <Text style={[styles.saveButtonText, saved && styles.saveButtonTextActive]}>
-                      {saved ? 'Saved' : 'Save'}
+                      {saved ? '✓' : '+'}
                     </Text>
                   </Pressable>
                 </View>
-                <Text style={styles.devotionBody}>{card.encouragement}</Text>
+
+                <Text style={styles.cardBody}>{card.encouragement}</Text>
+
+                <View style={styles.divider} />
+
                 <View style={styles.verseWrapper}>
                   {isLiquidGlassSupported && (
                     <LiquidGlassView style={styles.verseGlass} effect="clear" colorScheme={glassScheme} />

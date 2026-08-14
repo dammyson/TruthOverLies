@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {Pressable, StyleSheet, Switch, Text, View} from 'react-native';
+import { StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -10,8 +10,8 @@ import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 
 function ProfileScreen() {
-  const {currentUser, logout, savedCards, selectedFeelings} = useAppContext();
-  const {colors, themeMode, setThemeMode, isDark} = useTheme();
+  const {currentUser, savedCards, selectedFeelings} = useAppContext();
+  const {colors, isDark} = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
 
   const styles = useMemo(
@@ -193,36 +193,6 @@ function ProfileScreen() {
               </View>
             </View>
           </View>
-
-          <View style={styles.panelWrapper}>
-            {isLiquidGlassSupported && (
-              <LiquidGlassView style={styles.panelGlass} effect="clear" colorScheme={glassScheme} />
-            )}
-            <View style={styles.panelContent}>
-              <Text style={styles.panelTitle}>Appearance</Text>
-              <View style={styles.row}>
-                <Text style={styles.rowLabel}>Dark mode</Text>
-                <Switch
-                  value={isDark}
-                  onValueChange={val => setThemeMode(val ? 'dark' : 'light')}
-                  trackColor={{false: colors.border, true: colors.primary}}
-                  thumbColor={colors.white}
-                />
-              </View>
-              {themeMode !== 'system' && (
-                <>
-                  <View style={styles.divider} />
-                  <Pressable accessibilityRole="button" onPress={() => setThemeMode('system')}>
-                    <Text style={styles.systemLink}>Use system setting</Text>
-                  </Pressable>
-                </>
-              )}
-            </View>
-          </View>
-
-          <Pressable accessibilityRole="button" onPress={logout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Sign Out</Text>
-          </Pressable>
         </View>
       </View>
     </ScreenShell>
