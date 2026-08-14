@@ -1,15 +1,20 @@
 import React, {useMemo} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
+import SkeletonBlock from '../../components/SkeletonBlock';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+import {RootStackParamList} from '../../navigation/RootNavigator';
 
 function SavedScreen() {
-  const {savedCards} = useAppContext();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {savedCards, isSavedLoading} = useAppContext();
   const {colors, isDark} = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
 
@@ -17,6 +22,12 @@ function SavedScreen() {
     () =>
       StyleSheet.create({
         header: {marginBottom: spacing.md},
+        headerRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+          marginBottom: spacing.xs,
+        },
         eyebrow: {
           ...typography.eyebrow,
           color: colors.primaryDark,
@@ -26,11 +37,23 @@ function SavedScreen() {
           ...typography.title2,
           fontWeight: '700',
           color: colors.text,
-          marginBottom: spacing.xs,
+        },
+        countBadge: {
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 2,
+          borderRadius: radius.full,
+          backgroundColor: colors.backgroundAccent,
+          alignSelf: 'center',
+        },
+        countText: {
+          ...typography.caption1,
+          fontWeight: '700',
+          color: colors.primaryDark,
         },
         subtitle: {
           ...typography.subhead,
           color: colors.muted,
+          marginTop: spacing.xs,
         },
         cardWrapper: {
           borderRadius: radius.xl,
@@ -45,24 +68,42 @@ function SavedScreen() {
           ...StyleSheet.absoluteFill,
           borderRadius: radius.xl,
         },
-        cardContent: {padding: spacing.md},
+        cardContent: {
+          flexDirection: 'row',
+          padding: spacing.md,
+          gap: spacing.sm,
+        },
+        accentBar: {
+          width: 3,
+          borderRadius: 2,
+          backgroundColor: colors.primary,
+          alignSelf: 'stretch',
+        },
+        cardBody: {flex: 1},
         cardTitle: {
           ...typography.headline,
           fontWeight: '700',
           color: colors.text,
-          marginBottom: spacing.sm,
-        },
-        cardBody: {
-          ...typography.subhead,
-          color: colors.muted,
-          marginBottom: spacing.sm,
-        },
-        cardVerse: {
-          ...typography.subhead,
-          color: colors.text,
           marginBottom: spacing.xs,
         },
-        cardReference: {
+        cardExcerpt: {
+          ...typography.footnote,
+          color: colors.muted,
+          marginBottom: spacing.sm,
+          lineHeight: 18,
+        },
+        referenceRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.xs,
+        },
+        referenceDot: {
+          width: 4,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: colors.primaryDark,
+        },
+        referenceText: {
           ...typography.caption1,
           fontWeight: '700',
           color: colors.primaryDark,
@@ -79,7 +120,7 @@ function SavedScreen() {
           ...StyleSheet.absoluteFill,
           borderRadius: radius.xxl,
         },
-        emptyContent: {padding: spacing.md + 2},
+        emptyContent: {padding: spacing.lg},
         emptyTitle: {
           ...typography.headline,
           fontWeight: '700',
@@ -97,14 +138,27 @@ function SavedScreen() {
   return (
     <ScreenShell>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Saved</Text>
-        <Text style={styles.title}>Your favourite encouragements</Text>
+        <Text style={styles.eyebrow}>Your Collection</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Saved</Text>
+          {!isSavedLoading && savedCards.length > 0 && (
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{savedCards.length}</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.subtitle}>
-          Keep the verses and reflections you want to return to during the week.
+          Verses and reflections you want to return to.
         </Text>
       </View>
 
-      {savedCards.length === 0 ? (
+      {isSavedLoading ? (
+        <>
+          {[1, 2, 3].map(i => (
+            <SkeletonBlock key={i} height={120} borderRadius={radius.xl} style={{marginBottom: spacing.sm}} />
+          ))}
+        </>
+      ) : savedCards.length === 0 ? (
         <View style={styles.emptyWrapper}>
           {isLiquidGlassSupported && (
             <LiquidGlassView style={styles.emptyGlass} effect="regular" colorScheme={glassScheme} />
@@ -112,23 +166,33 @@ function SavedScreen() {
           <View style={styles.emptyContent}>
             <Text style={styles.emptyTitle}>Nothing saved yet</Text>
             <Text style={styles.emptyText}>
-              Save a verse from the Home tab and it will appear here.
+              Tap + on any card in the Home tab to save a verse here.
             </Text>
           </View>
         </View>
       ) : (
         savedCards.map(card => (
-          <View key={card.id} style={styles.cardWrapper}>
+          <Pressable
+            key={card.id}
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('SavedDetail', {card})}
+            style={({pressed}) => [styles.cardWrapper, pressed && {opacity: 0.75}]}>
             {isLiquidGlassSupported && (
               <LiquidGlassView style={styles.cardGlass} effect="regular" colorScheme={glassScheme} />
             )}
             <View style={styles.cardContent}>
-              <Text style={styles.cardTitle}>{card.title}</Text>
-              <Text style={styles.cardBody}>{card.encouragement}</Text>
-              <Text style={styles.cardVerse}>{card.verse}</Text>
-              <Text style={styles.cardReference}>{card.reference}</Text>
+              <View style={styles.cardBody}>
+                <Text style={styles.cardTitle}>{card.title}</Text>
+                <Text style={styles.cardExcerpt} numberOfLines={2}>
+                  {card.encouragement}
+                </Text>
+                <View style={styles.referenceRow}>
+                  <View style={styles.referenceDot} />
+                  <Text style={styles.referenceText}>{card.reference}</Text>
+                </View>
+              </View>
             </View>
-          </View>
+          </Pressable>
         ))
       )}
     </ScreenShell>

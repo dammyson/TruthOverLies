@@ -6,7 +6,7 @@ import {useAppContext} from '../context/AppContext';
 import {useTheme} from '../context/ThemeContext';
 import {colors} from '../theme/colors';
 import AuthNavigator from './AuthNavigator';
-import MainTabNavigator from './MainTabNavigator';
+import RootNavigator from './RootNavigator';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -31,7 +31,7 @@ function AppNavigator() {
           <ActivityIndicator color={themeColors.primaryDark} size="large" />
         </View>
       ) : currentUser ? (
-        <MainTabNavigator />
+        <RootNavigator />
       ) : (
         <AuthNavigator />
       )}
