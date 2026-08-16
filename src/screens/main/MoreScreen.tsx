@@ -1,5 +1,7 @@
 import React, {useMemo} from 'react';
-import {Pressable, StyleSheet, Switch, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
@@ -7,30 +9,38 @@ import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+import {RootStackParamList} from '../../navigation/RootNavigator';
 
-type Category = {
+type SettingsRow = {
   key: string;
   icon: string;
   label: string;
   description: string;
 };
 
-const CATEGORIES: Category[] = [
+const ROWS: SettingsRow[] = [
   {key: 'appearance', icon: '◐', label: 'Appearance', description: 'Theme & display'},
-  {key: 'about', icon: '✦', label: 'About', description: 'TruthOverLies v1.0'},
-  {key: 'share', icon: '↑', label: 'Share', description: 'Invite a friend'},
-  {key: 'privacy', icon: '⊙', label: 'Privacy', description: 'Terms & policy'},
+  {key: 'about',      icon: '✦', label: 'About',      description: 'TruthOverLies v1.0'},
+  {key: 'share',      icon: '↑', label: 'Share',      description: 'Invite a friend'},
+  {key: 'privacy',    icon: '⊙', label: 'Privacy',    description: 'Terms & policy'},
 ];
 
 function MoreScreen() {
   const {logout} = useAppContext();
-  const {colors, isDark, setThemeMode, themeMode} = useTheme();
+  const {colors, isDark} = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const glassScheme = isDark ? 'dark' : 'light';
+
+  const onRowPress = (key: string) => {
+    if (key === 'appearance') {
+      navigation.navigate('Appearance');
+    }
+  };
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        header: {marginBottom: spacing.lg},
+        header: {marginBottom: spacing.md},
         eyebrow: {
           ...typography.eyebrow,
           color: colors.primaryDark,
@@ -41,100 +51,76 @@ function MoreScreen() {
           fontWeight: '700',
           color: colors.text,
         },
-        grid: {
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: spacing.sm,
+        listWrapper: {
+          borderRadius: radius.xxl,
           marginBottom: spacing.md,
-        },
-        gridItem: {
-          width: '47.5%',
-          borderRadius: radius.xl,
           ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surfaceStrong,
+            backgroundColor: colors.surface,
             borderWidth: 1,
             borderColor: colors.border,
           }),
         },
-        gridGlass: {
-          ...StyleSheet.absoluteFill,
-          borderRadius: radius.xl,
-        },
-        gridContent: {
-          padding: spacing.md,
-          minHeight: 100,
-          justifyContent: 'space-between',
-        },
-        gridIcon: {
-          ...typography.title1,
-          color: colors.primaryDark,
-          marginBottom: spacing.sm,
-        },
-        gridLabel: {
-          ...typography.headline,
-          fontWeight: '700',
-          color: colors.text,
-        },
-        gridDesc: {
-          ...typography.caption1,
-          color: colors.muted,
-          marginTop: 2,
-        },
-        settingsWrapper: {
-          borderRadius: radius.xxl,
-          marginBottom: spacing.md,
-          ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surfaceStrong,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }),
-        },
-        settingsGlass: {
+        listGlass: {
           ...StyleSheet.absoluteFill,
           borderRadius: radius.xxl,
-        },
-        settingsContent: {padding: spacing.md},
-        settingsLabel: {
-          ...typography.eyebrow,
-          color: colors.primaryDark,
-          marginBottom: spacing.sm,
         },
         row: {
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: 44,
-          gap: spacing.sm,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm + 4,
+          minHeight: 60,
+          gap: spacing.sm + 4,
         },
+        iconWrapper: {
+          width: 36,
+          height: 36,
+          borderRadius: radius.sm,
+          backgroundColor: colors.backgroundAccent,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        iconText: {
+          ...typography.body,
+          color: colors.primaryDark,
+        },
+        rowText: {flex: 1},
         rowLabel: {
           ...typography.subhead,
+          fontWeight: '600',
+          color: colors.text,
+        },
+        rowDesc: {
+          ...typography.caption1,
+          color: colors.muted,
+          marginTop: 1,
+        },
+        chevron: {
+          ...typography.body,
           color: colors.muted,
         },
         divider: {
           height: StyleSheet.hairlineWidth,
           backgroundColor: colors.border,
-          marginVertical: spacing.xs,
+          marginLeft: spacing.md + 36 + spacing.sm + 4,
         },
-        systemLink: {
-          ...typography.footnote,
-          fontWeight: '600',
-          color: colors.primary,
-          marginTop: spacing.xs,
-        },
-        signOutButton: {
-          borderRadius: radius.xl,
-          minHeight: 50,
-          alignItems: 'center',
-          justifyContent: 'center',
+        signOutWrapper: {
+          borderRadius: radius.xxl,
           ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surfaceStrong,
+            backgroundColor: colors.surface,
             borderWidth: 1,
             borderColor: colors.border,
           }),
         },
         signOutGlass: {
           ...StyleSheet.absoluteFill,
-          borderRadius: radius.xl,
+          borderRadius: radius.xxl,
+        },
+        signOutRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 54,
         },
         signOutText: {
           ...typography.headline,
@@ -148,66 +134,45 @@ function MoreScreen() {
   return (
     <ScreenShell>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Settings & More</Text>
+        <Text style={styles.title}>More</Text>
       </View>
 
-      {/* Category grid */}
-      <View style={styles.grid}>
-        {CATEGORIES.map(cat => (
-          <Pressable
-            key={cat.key}
-            accessibilityRole="button"
-            style={styles.gridItem}>
-            {isLiquidGlassSupported && (
-              <LiquidGlassView style={styles.gridGlass} effect="regular" colorScheme={glassScheme} />
-            )}
-            <View style={styles.gridContent}>
-              <Text style={styles.gridIcon}>{cat.icon}</Text>
-              <View>
-                <Text style={styles.gridLabel}>{cat.label}</Text>
-                <Text style={styles.gridDesc}>{cat.description}</Text>
-              </View>
-            </View>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Appearance settings */}
-      <View style={styles.settingsWrapper}>
+      {/* Settings list */}
+      <View style={styles.listWrapper}>
         {isLiquidGlassSupported && (
-          <LiquidGlassView style={styles.settingsGlass} effect="regular" colorScheme={glassScheme} />
+          <LiquidGlassView style={styles.listGlass} effect="regular" colorScheme={glassScheme} />
         )}
-        <View style={styles.settingsContent}>
-          <Text style={styles.settingsLabel}>Appearance</Text>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Dark mode</Text>
-            <Switch
-              value={isDark}
-              onValueChange={val => setThemeMode(val ? 'dark' : 'light')}
-              trackColor={{false: colors.border, true: colors.primary}}
-              thumbColor={colors.white}
-            />
+        {ROWS.map((item, index) => (
+          <View key={item.key}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => onRowPress(item.key)}
+              style={({pressed}) => [styles.row, pressed && {opacity: 0.6}]}>
+              <View style={styles.iconWrapper}>
+                <Text style={styles.iconText}>{item.icon}</Text>
+              </View>
+              <View style={styles.rowText}>
+                <Text style={styles.rowLabel}>{item.label}</Text>
+                <Text style={styles.rowDesc}>{item.description}</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+            {index < ROWS.length - 1 && <View style={styles.divider} />}
           </View>
-          {themeMode !== 'system' && (
-            <>
-              <View style={styles.divider} />
-              <Pressable accessibilityRole="button" onPress={() => setThemeMode('system')}>
-                <Text style={styles.systemLink}>Use system setting</Text>
-              </Pressable>
-            </>
-          )}
-        </View>
+        ))}
       </View>
 
       {/* Sign out */}
       <Pressable
         accessibilityRole="button"
         onPress={logout}
-        style={styles.signOutButton}>
+        style={({pressed}) => [styles.signOutWrapper, pressed && {opacity: 0.7}]}>
         {isLiquidGlassSupported && (
-          <LiquidGlassView style={styles.signOutGlass} effect="clear" colorScheme={glassScheme} />
+          <LiquidGlassView style={styles.signOutGlass} effect="regular" colorScheme={glassScheme} />
         )}
-        <Text style={styles.signOutText}>Sign Out</Text>
+        <View style={styles.signOutRow}>
+          <Text style={styles.signOutText}>Sign Out</Text>
+        </View>
       </Pressable>
     </ScreenShell>
   );
