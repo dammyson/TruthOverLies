@@ -1,18 +1,13 @@
 import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import MainTabNavigator from './MainTabNavigator';
-import SavedDetailScreen from '../screens/main/SavedDetailScreen';
-import AppearanceScreen from '../screens/main/AppearanceScreen';
+import BibleHomeScreen from '../screens/bible/BibleHomeScreen';
 import ChapterGridScreen from '../screens/bible/ChapterGridScreen';
 import ReaderScreen from '../screens/bible/ReaderScreen';
-import {DevotionCard} from '../types/app';
 import {useTheme} from '../context/ThemeContext';
 
-export type RootStackParamList = {
-  MainTabs: undefined;
-  SavedDetail: {card: DevotionCard};
-  Appearance: undefined;
+export type BibleStackParamList = {
+  BibleHome: undefined;
   ChapterGrid: {
     bookId: string;
     bookName: string;
@@ -28,9 +23,9 @@ export type RootStackParamList = {
   };
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<BibleStackParamList>();
 
-function RootNavigator() {
+function BibleStackNavigator() {
   const {colors} = useTheme();
 
   return (
@@ -39,31 +34,7 @@ function RootNavigator() {
         headerShown: false,
         contentStyle: {backgroundColor: colors.background},
       }}>
-      <Stack.Screen name="MainTabs" component={MainTabNavigator} options={{title: ''}} />
-      <Stack.Screen
-        name="SavedDetail"
-        component={SavedDetailScreen}
-        options={{
-          headerShown: true,
-          headerTitle: '',
-          headerBackTitle: '',
-          headerTintColor: '#FFFDF5',
-          headerTransparent: true,
-          headerShadowVisible: false,
-        }}
-      />
-      <Stack.Screen
-        name="Appearance"
-        component={AppearanceScreen}
-        options={{
-          headerShown: true,
-          headerTitle: 'Appearance',
-          headerBackTitle: '',
-          headerTintColor: colors.primaryDark,
-          headerShadowVisible: false,
-          headerStyle: {backgroundColor: colors.background},
-        }}
-      />
+      <Stack.Screen name="BibleHome" component={BibleHomeScreen} />
       <Stack.Screen
         name="ChapterGrid"
         component={ChapterGridScreen}
@@ -92,4 +63,4 @@ function RootNavigator() {
   );
 }
 
-export default RootNavigator;
+export default BibleStackNavigator;
