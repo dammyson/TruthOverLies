@@ -25,7 +25,7 @@ function AuthCard({title, subtitle, children}: AuthCardProps) {
           marginBottom: spacing.sm,
         },
         heroTitle: {
-          ...typography.largeTitle,
+          fontSize: 30,
           fontWeight: '700',
           color: colors.text,
           maxWidth: 300,
@@ -68,8 +68,8 @@ function AuthCard({title, subtitle, children}: AuthCardProps) {
   return (
     <>
       <View style={styles.heroBlock}>
-        <Text style={styles.eyebrow}>God's Place</Text>
-        <Text style={styles.heroTitle}>Encouraging words for your daily walk.</Text>
+        <Text style={styles.eyebrow}>TruthOverlies</Text>
+        <Text style={styles.heroTitle}>Connect, Encourage and Grow</Text>
       </View>
 
       <View style={[styles.cardWrapper, !isLiquidGlassSupported && styles.cardFallback]}>
