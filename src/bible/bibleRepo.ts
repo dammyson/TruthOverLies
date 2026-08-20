@@ -1,5 +1,8 @@
 import * as bibleApi from '../api/bible';
+import {ApiError} from '../api/types';
 import {getDb} from './db';
+
+const sleep = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
 
 // ── SQLite cache helpers ──────────────────────────────────────────────────────
 
@@ -16,6 +19,13 @@ function cacheSet(key: string, value: unknown): void {
     'INSERT OR REPLACE INTO cache (key, val, ts) VALUES (?, ?, ?)',
     [key, JSON.stringify(value), new Date().toISOString()],
   );
+}
+
+// Module-level set so the modal can show in-progress status for background downloads
+const _activeDownloads = new Set<string>();
+
+export function isDownloadInProgress(id: string): boolean {
+  return _activeDownloads.has(id);
 }
 
 const K = {
@@ -95,18 +105,44 @@ export async function isTranslationDownloaded(translationId: string): Promise<bo
 
 // ── Download all verses for a translation → SQLite ───────────────────────────
 
+async function downloadBookWithRetry(
+  translationId: string,
+  bookId: string,
+  maxRetries = 4,
+): Promise<bibleApi.BibleDownloadBook | null> {
+  let delay = 2000;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await bibleApi.downloadBook(translationId, bookId);
+    } catch (err) {
+      const isRateLimit = err instanceof ApiError && err.status === 429;
+      if (isRateLimit && attempt < maxRetries) {
+        await sleep(delay);
+        delay = Math.min(delay * 2, 16000);
+        continue;
+      }
+      return null;
+    }
+  }
+  return null;
+}
+
 export async function downloadTranslation(
   translationId: string,
   books: bibleApi.BibleBook[],
   onProgress: (pct: number) => void,
 ): Promise<void> {
+  _activeDownloads.add(translationId);
   const db = getDb();
 
   for (let i = 0; i < books.length; i++) {
     const book = books[i];
-    try {
-      const bookData = await bibleApi.downloadBook(translationId, book.id);
+    if (i > 0) {
+      await sleep(250); // stay under rate limit
+    }
 
+    const bookData = await downloadBookWithRetry(translationId, book.id);
+    if (bookData) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       db.transaction((tx: any) => {
         for (const chStr of Object.keys(bookData)) {
@@ -119,8 +155,6 @@ export async function downloadTranslation(
           }
         }
       });
-    } catch {
-      // Skip failed books — don't abort the whole download
     }
     onProgress((i + 1) / books.length);
   }
@@ -130,6 +164,7 @@ export async function downloadTranslation(
     'INSERT OR REPLACE INTO translations (id, downloaded_at, version) VALUES (?, ?, 1)',
     [translationId, new Date().toISOString()],
   );
+  _activeDownloads.delete(translationId);
 }
 
 // ── Delete a downloaded translation ──────────────────────────────────────────
@@ -141,4 +176,85 @@ export async function deleteTranslation(translationId: string): Promise<void> {
     tx.execute('DELETE FROM verses WHERE translation = ?', [translationId]);
     tx.execute('DELETE FROM translations WHERE id = ?', [translationId]);
   });
+}
+
+// ── Search (SQLite only — requires downloaded translation) ────────────────────
+
+export type SearchResult = {
+  bookId: string;
+  bookName: string;
+  chapter: number;
+  verse: number;
+  text: string;
+};
+
+export async function searchVerses(
+  translation: string,
+  query: string,
+  limit = 100,
+): Promise<SearchResult[]> {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
+
+  const downloaded = await isTranslationDownloaded(translation);
+  if (!downloaded) return [];
+
+  const books = await getBooks(translation);
+  const bookMap = new Map(books.map(b => [b.id, b.name]));
+
+  const db = getDb();
+  const result = db.execute(
+    'SELECT book, chapter, verse, text FROM verses WHERE translation = ? AND text LIKE ? ORDER BY book, chapter, verse LIMIT ?',
+    [translation, `%${trimmed}%`, limit],
+  );
+
+  const rows: Array<{book: string; chapter: number; verse: number; text: string}> =
+    result.rows?._array ?? [];
+
+  return rows.map(r => ({
+    bookId: r.book,
+    bookName: bookMap.get(r.book) ?? r.book,
+    chapter: r.chapter,
+    verse: r.verse,
+    text: r.text,
+  }));
+}
+
+// ── Selected translation (persisted choice, works online or offline) ─────────
+
+export function getSelectedTranslation(): string | null {
+  return cacheGet<string>('selected_translation');
+}
+
+export function setSelectedTranslation(id: string): void {
+  cacheSet('selected_translation', id);
+}
+
+// ── Default bible download (KJV on first login) ───────────────────────────────
+
+export async function ensureKjvDownloaded(): Promise<void> {
+  if (_activeDownloads.has('KJV')) {
+    return; // already in progress
+  }
+  try {
+    const already = await isTranslationDownloaded('KJV');
+    if (already) {
+      if (!getSelectedTranslation()) {
+        setSelectedTranslation('KJV');
+      }
+      return;
+    }
+    _activeDownloads.add('KJV');
+    console.log('[Bible] Downloading KJV in background...');
+    const books = await getBooks('KJV');
+    await downloadTranslation('KJV', books, () => {});
+    if (!getSelectedTranslation()) {
+      setSelectedTranslation('KJV');
+    }
+    console.log('[Bible] KJV download complete');
+  } catch (err) {
+    console.warn('[Bible] KJV background download failed:', err);
+  } finally {
+    _activeDownloads.delete('KJV');
+  }
 }

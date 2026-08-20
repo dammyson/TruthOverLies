@@ -6,6 +6,7 @@ import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
 import SkeletonBlock from '../../components/SkeletonBlock';
+import VerseLink from '../../components/VerseLink';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
@@ -188,7 +189,7 @@ function SavedScreen() {
                 </Text>
                 <View style={styles.referenceRow}>
                   <View style={styles.referenceDot} />
-                  <Text style={styles.referenceText}>{card.reference}</Text>
+                  <VerseLink reference={card.reference} style={styles.referenceText} />
                 </View>
               </View>
             </View>

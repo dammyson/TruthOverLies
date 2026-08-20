@@ -5,6 +5,7 @@ import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 
 import SkeletonBlock from '../../components/SkeletonBlock';
+import VerseLink from '../../components/VerseLink';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
@@ -16,7 +17,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const HERO_HEIGHT = Math.round(SCREEN_WIDTH * 0.72);
 const H_PAD = spacing.md + 2;
 
-function SavedDetailScreen({route}: Props) {
+function SavedDetailScreen({route, navigation}: Props) {
   const {card} = route.params;
   const {colors, isDark} = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
@@ -161,7 +162,11 @@ function SavedDetailScreen({route}: Props) {
           <View style={styles.verseContent}>
             <Text style={styles.verseEyebrow}>Scripture</Text>
             <Text style={styles.verseText}>{card.verse}</Text>
-            <Text style={styles.referenceText}>{card.reference}</Text>
+            <VerseLink
+              reference={card.reference}
+              style={styles.referenceText}
+              onBeforeNavigate={() => navigation.goBack()}
+            />
           </View>
         </View>
       </View>

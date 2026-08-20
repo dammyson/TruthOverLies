@@ -1,5 +1,7 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
+import {Platform} from 'react-native';
 import TabView, {SceneMap} from 'react-native-bottom-tabs';
+import {useBibleNav} from '../context/BibleNavContext';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import BibleHomeScreen from '../screens/bible/BibleHomeScreen';
@@ -16,42 +18,51 @@ const renderScene = SceneMap({
   more: MoreScreen,
 });
 
+const isIOS = Platform.OS === 'ios';
+
 const routes = [
   {
     key: 'home',
     title: 'Home',
-    focusedIcon: {sfSymbol: 'house.fill'},
-    unfocusedIcon: {sfSymbol: 'house'},
+    focusedIcon: isIOS ? {sfSymbol: 'house.fill'} : {uri: 'ic_home_filled'},
+    unfocusedIcon: isIOS ? {sfSymbol: 'house'} : {uri: 'ic_home'},
   },
   {
     key: 'saved',
     title: 'Saved',
-    focusedIcon: {sfSymbol: 'bookmark.fill'},
-    unfocusedIcon: {sfSymbol: 'bookmark'},
+    focusedIcon: isIOS ? {sfSymbol: 'bookmark.fill'} : {uri: 'ic_bookmark_filled'},
+    unfocusedIcon: isIOS ? {sfSymbol: 'bookmark'} : {uri: 'ic_bookmark'},
   },
   {
     key: 'bible',
     title: 'Bible',
-    focusedIcon: {sfSymbol: 'book.fill'},
-    unfocusedIcon: {sfSymbol: 'book'},
+    focusedIcon: isIOS ? {sfSymbol: 'book.fill'} : {uri: 'ic_book_filled'},
+    unfocusedIcon: isIOS ? {sfSymbol: 'book'} : {uri: 'ic_book'},
   },
   {
     key: 'profile',
     title: 'You',
-    focusedIcon: {sfSymbol: 'person.fill'},
-    unfocusedIcon: {sfSymbol: 'person'},
+    focusedIcon: isIOS ? {sfSymbol: 'person.fill'} : {uri: 'ic_person_filled'},
+    unfocusedIcon: isIOS ? {sfSymbol: 'person'} : {uri: 'ic_person'},
   },
   {
     key: 'more',
     title: 'More',
-    focusedIcon: {sfSymbol: 'line.3.horizontal'},
-    unfocusedIcon: {sfSymbol: 'line.3.horizontal'},
+    focusedIcon: isIOS ? {sfSymbol: 'line.3.horizontal'} : {uri: 'ic_menu'},
+    unfocusedIcon: isIOS ? {sfSymbol: 'line.3.horizontal'} : {uri: 'ic_menu'},
   },
 ];
+
+const BIBLE_TAB_INDEX = 2;
 
 function MainTabNavigator() {
   const [index, setIndex] = useState(0);
   const {colors} = useTheme();
+  const {pending} = useBibleNav();
+
+  useEffect(() => {
+    if (pending) setIndex(BIBLE_TAB_INDEX);
+  }, [pending]);
 
   return (
     <TabView
