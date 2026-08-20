@@ -56,35 +56,38 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
         let list: bibleApi.BibleListItem[] = [];
 
         try {
-          list = await bibleApi.listAvailableTranslations();
+          const basic = await bibleRepo.getTranslations();
+          list = basic.map(t => ({
+            id: t.code,
+            name: t.name,
+            language: 'en',
+            version: 1,
+            sizeBytes: 0,
+          }));
         } catch (err) {
-          console.warn('[Bible] /v1/bibles failed, falling back to /bible/translations', err);
-          try {
-            const basic = await bibleRepo.getTranslations();
-            list = basic.map(t => ({
-              id: t.code,
-              name: t.name,
-              language: 'English',
-              version: 1,
-              sizeBytes: 0,
-            }));
-          } catch (fallbackErr) {
-            console.warn('[Bible] translation list fetch failed entirely', fallbackErr);
-          }
+          console.warn('[Bible] translation list fetch failed', err);
         }
 
         if (cancelled) {
           return;
         }
-        setTranslations(list);
+        // Deduplicate by id — API can return the same translation twice
+        const unique = list.filter(
+          (item, i, arr) => arr.findIndex(x => x.id === item.id) === i,
+        );
+        setTranslations(unique);
 
         const states: DlState = {};
-        for (const t of list) {
+        for (const t of unique) {
           if (cancelled) {
             return;
           }
-          const downloaded = await bibleRepo.isTranslationDownloaded(t.id);
-          states[t.id] = {status: downloaded ? 'downloaded' : 'idle', progress: 0};
+          if (bibleRepo.isDownloadInProgress(t.id)) {
+            states[t.id] = {status: 'downloading', progress: 0};
+          } else {
+            const downloaded = await bibleRepo.isTranslationDownloaded(t.id);
+            states[t.id] = {status: downloaded ? 'downloaded' : 'idle', progress: 0};
+          }
         }
 
         if (cancelled) {

@@ -13,6 +13,7 @@ import * as feelingsApi from '../api/feelings';
 import {ApiError} from '../api/types';
 import storage from '../cache/storage';
 import CACHE_KEYS from '../cache/keys';
+import {ensureKjvDownloaded} from '../bible/bibleRepo';
 import {buildDevotions} from '../data/devotions';
 import {
   AuthMessageTone,
@@ -81,6 +82,7 @@ function AppProvider({children}: {children: ReactNode}) {
         setAuthToken(token);
         setCurrentUser(profile);
         loadUserData(token);
+        ensureKjvDownloaded(); // ensure KJV is present on every app start
 
         // Refresh profile silently
         authApi.getMe(token).then(me => {
@@ -151,6 +153,7 @@ function AppProvider({children}: {children: ReactNode}) {
       storage.set(CACHE_KEYS.USER_PROFILE, user),
     ]);
     loadUserData(token);
+    ensureKjvDownloaded(); // fire-and-forget — downloads KJV offline on first login
   }
 
   // ── Auth ─────────────────────────────────────────────────────────────────

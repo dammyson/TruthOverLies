@@ -3,6 +3,7 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
+import VerseLink from '../../components/VerseLink';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
@@ -189,7 +190,7 @@ function ResultsScreen() {
                   )}
                   <View style={styles.verseContent}>
                     <Text style={styles.verseText}>{card.verse}</Text>
-                    <Text style={styles.referenceText}>{card.reference}</Text>
+                    <VerseLink reference={card.reference} style={styles.referenceText} />
                   </View>
                 </View>
               </View>
