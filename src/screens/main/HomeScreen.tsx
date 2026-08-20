@@ -1,9 +1,9 @@
-import React, {useMemo} from 'react';
+import React, {useEffect, useMemo, useRef} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Animated, Easing, Pressable, StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
-import LinearGradient from 'react-native-linear-gradient';
 
+import HeroAnimation from '../../components/HeroAnimation';
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
@@ -18,6 +18,8 @@ import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
 
+const HERO_HEIGHT = 280;
+
 function HomeScreen({navigation}: Props) {
   const {
     currentUser,
@@ -31,6 +33,28 @@ function HomeScreen({navigation}: Props) {
   } = useAppContext();
   const {colors, isDark} = useTheme();
   const {isTransitioning, runWithTransition} = useTransitionAction();
+  const glassScheme = isDark ? 'dark' : 'light';
+
+  const eyebrowAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(350),
+      Animated.timing(eyebrowAnim, {
+        toValue: 1,
+        duration: 550,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.quad),
+      }),
+      Animated.timing(titleAnim, {
+        toValue: 1,
+        duration: 650,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.quad),
+      }),
+    ]).start();
+  }, [eyebrowAnim, titleAnim]);
 
   const hour = new Date().getHours();
   const timeGreeting =
@@ -56,9 +80,10 @@ function HomeScreen({navigation}: Props) {
         heroCard: {
           borderRadius: radius.xxl,
           overflow: 'hidden',
-          height: 200,
+          height: HERO_HEIGHT,
           marginBottom: spacing.md,
           justifyContent: 'flex-end',
+          backgroundColor: '#0A0504',
         },
         heroContent: {
           padding: spacing.md + 4,
@@ -74,6 +99,7 @@ function HomeScreen({navigation}: Props) {
           color: '#FFFDF5',
           maxWidth: '78%',
         },
+        // ── Feeling panel ─────────────────────────────────────────
         panelWrapper: {
           borderRadius: radius.xxl,
           marginBottom: spacing.md,
@@ -87,51 +113,72 @@ function HomeScreen({navigation}: Props) {
           ...StyleSheet.absoluteFill,
           borderRadius: radius.xxl,
         },
-        panelContent: {padding: spacing.md},
+        panelContent: {
+          padding: spacing.md + 2,
+        },
         panelHeader: {
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: spacing.sm + 4,
+          marginBottom: spacing.md,
         },
         panelTitle: {
           ...typography.headline,
+          fontWeight: '600',
           color: colors.text,
         },
-        counter: {
-          ...typography.footnote,
+        counterBadge: {
+          paddingHorizontal: 10,
+          paddingVertical: 3,
+          borderRadius: 20,
+          backgroundColor: colors.backgroundAccent,
+        },
+        counterText: {
+          ...typography.caption1,
           fontWeight: '700',
           color: colors.primaryDark,
         },
+        // ── Feeling chips ─────────────────────────────────────────
         feelingsWrap: {
           flexDirection: 'row',
           flexWrap: 'wrap',
           gap: spacing.sm,
+          marginBottom: spacing.sm,
         },
-        feelingChip: {
-          paddingHorizontal: spacing.sm + 4,
-          paddingVertical: spacing.sm,
-          borderRadius: radius.md,
-          backgroundColor: colors.surfaceStrong,
-          borderWidth: 1,
-          borderColor: colors.border,
+        chip: {
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm + 2,
+          borderRadius: radius.xl,
+          overflow: 'hidden',
           minHeight: 44,
           justifyContent: 'center',
+          alignItems: 'center',
         },
-        feelingChipActive: {
+        chipInactiveFallback: {
+          backgroundColor: colors.surfaceStrong,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+        },
+        chipActive: {
           backgroundColor: colors.primary,
-          borderColor: colors.primary,
         },
-        feelingText: {
+        chipGlass: {
+          ...StyleSheet.absoluteFill,
+          borderRadius: radius.xl,
+        },
+        chipText: {
           ...typography.subhead,
           fontWeight: '600',
           color: colors.text,
         },
-        feelingTextActive: {color: colors.white},
+        chipTextActive: {
+          color: colors.white,
+        },
         skeletonRow: {
           flexDirection: 'row',
           flexWrap: 'wrap',
           gap: spacing.sm,
+          marginBottom: spacing.sm,
         },
       }),
     [colors],
@@ -149,17 +196,42 @@ function HomeScreen({navigation}: Props) {
 
       {/* Hero card */}
       <View style={styles.heroCard}>
-        <LinearGradient
-          colors={['#2D1810', '#5C3020', '#8B5E3C', '#C4A06B']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={StyleSheet.absoluteFill}
-        />
+        <HeroAnimation height={HERO_HEIGHT} />
         <View style={styles.heroContent}>
-          <Text style={styles.heroEyebrow}>WORD FOR TODAY</Text>
-          <Text style={styles.heroTitle}>
+          <Animated.Text
+            style={[
+              styles.heroEyebrow,
+              {
+                opacity: eyebrowAnim,
+                transform: [
+                  {
+                    translateY: eyebrowAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [8, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}>
+            WORD FOR TODAY
+          </Animated.Text>
+          <Animated.Text
+            style={[
+              styles.heroTitle,
+              {
+                opacity: titleAnim,
+                transform: [
+                  {
+                    translateY: titleAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [14, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}>
             Tell me how you{"'"}re feeling and receive a word for this moment.
-          </Text>
+          </Animated.Text>
         </View>
       </View>
 
@@ -171,18 +243,21 @@ function HomeScreen({navigation}: Props) {
           <LiquidGlassView
             style={styles.glassBackground}
             effect="regular"
-            colorScheme={isDark ? 'dark' : 'light'}
+            colorScheme={glassScheme}
           />
         )}
         <View style={styles.panelContent}>
           <View style={styles.panelHeader}>
             <Text style={styles.panelTitle}>How are you feeling?</Text>
-            <Text style={styles.counter}>{selectedFeelings.length}/4</Text>
+            <View style={styles.counterBadge}>
+              <Text style={styles.counterText}>{selectedFeelings.length}/4</Text>
+            </View>
           </View>
+
           {isCatalogLoading ? (
             <View style={styles.skeletonRow}>
               {[72, 88, 64, 80, 68, 92, 60, 76].map((w, i) => (
-                <SkeletonBlock key={i} height={44} width={w} borderRadius={radius.md} />
+                <SkeletonBlock key={i} height={44} width={w} borderRadius={radius.xl} />
               ))}
             </View>
           ) : (
@@ -197,8 +272,21 @@ function HomeScreen({navigation}: Props) {
                       clearAuthMessage();
                       toggleFeeling(feeling);
                     }}
-                    style={[styles.feelingChip, active && styles.feelingChipActive]}>
-                    <Text style={[styles.feelingText, active && styles.feelingTextActive]}>
+                    style={({pressed}) => [
+                      styles.chip,
+                      active
+                        ? styles.chipActive
+                        : !isLiquidGlassSupported && styles.chipInactiveFallback,
+                      pressed && {opacity: 0.65},
+                    ]}>
+                    {!active && isLiquidGlassSupported && (
+                      <LiquidGlassView
+                        style={styles.chipGlass}
+                        effect="clear"
+                        colorScheme={glassScheme}
+                      />
+                    )}
+                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
                       {feeling}
                     </Text>
                   </Pressable>
@@ -206,6 +294,7 @@ function HomeScreen({navigation}: Props) {
               })}
             </View>
           )}
+
           <PrimaryButton
             label="Continue"
             loading={isTransitioning}
