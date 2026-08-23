@@ -9,11 +9,15 @@ type Props = {
   onBeforeNavigate?: () => void;
 };
 
-function parseRef(ref: string): {bookName: string; chapter: number} | null {
+function parseRef(ref: string): {bookName: string; chapter: number; verse?: number} | null {
   // Handles: "John 14:18", "1 John 3:16", "Psalm 103", "Romans 8:28"
-  const m = ref.trim().match(/^((?:\d\s+)?[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(\d+)(?::\d+)?$/);
+  const m = ref.trim().match(/^((?:\d\s+)?[A-Za-z]+(?:\s+[A-Za-z]+)*)\s+(\d+)(?::(\d+))?$/);
   if (!m) return null;
-  return {bookName: m[1].trim(), chapter: parseInt(m[2], 10)};
+  return {
+    bookName: m[1].trim(),
+    chapter: parseInt(m[2], 10),
+    verse: m[3] != null ? parseInt(m[3], 10) : undefined,
+  };
 }
 
 function VerseLink({reference, style, onBeforeNavigate}: Props) {
@@ -42,6 +46,7 @@ function VerseLink({reference, style, onBeforeNavigate}: Props) {
         bookName: book.name,
         chapter: Math.min(parsed.chapter, book.chapter_count),
         chapterCount: book.chapter_count,
+        verse: parsed.verse,
       });
     } catch {}
   }, [reference, navigateTo, onBeforeNavigate]);

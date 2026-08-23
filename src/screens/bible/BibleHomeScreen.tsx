@@ -58,8 +58,13 @@ function BibleHomeScreen() {
   const [versionPickerVisible, setVersionPickerVisible] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
 
+  const [highlightVerse, setHighlightVerse] = useState<number | null>(null);
+
   const scrollRef = useRef<ScrollView>(null);
   const initialized = useRef(false);
+  const pendingHighlightRef = useRef<number | null>(null);
+  const verseYOffsets = useRef<Map<number, number>>(new Map());
+  const highlightScrolled = useRef(false);
 
   // On first focus: read stored translation
   useFocusEffect(
@@ -75,6 +80,7 @@ function BibleHomeScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!pending) return;
+      pendingHighlightRef.current = pending.verse ?? null;
       setBookId(pending.bookId);
       setBookName(pending.bookName);
       setChapter(pending.chapter);
@@ -87,6 +93,9 @@ function BibleHomeScreen() {
     async (t: string, bId: string, ch: number) => {
       setLoading(true);
       setError(false);
+      setHighlightVerse(null);
+      verseYOffsets.current.clear();
+      highlightScrolled.current = false;
       try {
         const data = await bibleRepo.getChapter(t, bId, ch);
         // Deduplicate by verse number in case the API returns duplicate entries
@@ -95,6 +104,10 @@ function BibleHomeScreen() {
         );
         setVerses(unique);
         scrollRef.current?.scrollTo({y: 0, animated: false});
+        if (pendingHighlightRef.current != null) {
+          setHighlightVerse(pendingHighlightRef.current);
+          pendingHighlightRef.current = null;
+        }
       } catch {
         setError(true);
       } finally {
@@ -107,6 +120,21 @@ function BibleHomeScreen() {
   useEffect(() => {
     loadChapter(translation, bookId, chapter);
   }, [translation, bookId, chapter, loadChapter]);
+
+  // Scroll to and highlight the target verse once positions are measured
+  useEffect(() => {
+    if (highlightVerse == null || highlightScrolled.current) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      const yPos = verseYOffsets.current.get(highlightVerse);
+      if (yPos != null) {
+        highlightScrolled.current = true;
+        scrollRef.current?.scrollTo({y: Math.max(0, yPos - 80), animated: true});
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [highlightVerse]);
 
   const handleBookChapterSelect = useCallback(
     (bId: string, bName: string, ch: number, cc: number) => {
@@ -169,16 +197,32 @@ function BibleHomeScreen() {
           // clear the absolutely-positioned nav bar + tab bar
           paddingBottom: TAB_BAR_HEIGHT + insets.bottom + 80, // clears nav bar + tab bar
         },
-        paragraph: {
-          ...typography.body,
-          color: colors.text,
-          lineHeight: 34,
-          fontSize: 18,
+        verseBlock: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          paddingVertical: 6,
+          paddingHorizontal: spacing.xs,
+          borderRadius: radius.sm,
+          marginBottom: 2,
+        },
+        verseHighlight: {
+          backgroundColor: colors.primaryDark + '18',
         },
         verseNum: {
           fontSize: 11,
           fontWeight: '700',
           color: colors.primaryDark,
+          marginTop: 5,
+          marginRight: 6,
+          minWidth: 18,
+          textAlign: 'right',
+        },
+        verseText: {
+          ...typography.body,
+          color: colors.text,
+          lineHeight: 28,
+          fontSize: 17,
+          flex: 1,
         },
         skeletonList: {
           paddingHorizontal: spacing.lg,
@@ -329,15 +373,20 @@ function BibleHomeScreen() {
               ref={scrollRef}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}>
-              <Text style={styles.paragraph}>
-                {verses.map(v => (
-                  <Text key={`${bookId}-${chapter}-${v.verse}`}>
-                    <Text style={styles.verseNum}>{v.verse} </Text>
-                    {v.text}
-                    {'  '}
-                  </Text>
-                ))}
-              </Text>
+              {verses.map(v => (
+                <View
+                  key={`${bookId}-${chapter}-${v.verse}`}
+                  style={[
+                    styles.verseBlock,
+                    v.verse === highlightVerse && styles.verseHighlight,
+                  ]}
+                  onLayout={e => {
+                    verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
+                  }}>
+                  <Text style={styles.verseNum}>{v.verse}</Text>
+                  <Text style={styles.verseText}>{v.text}</Text>
+                </View>
+              ))}
             </ScrollView>
           )}
         </View>

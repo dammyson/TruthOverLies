@@ -28,6 +28,22 @@ export function isDownloadInProgress(id: string): boolean {
   return _activeDownloads.has(id);
 }
 
+// In-memory registry of downloaded translation IDs.
+// Seeded from SQLite on first access; updated immediately on every download.
+// Survives modal close/reopen within the same JS session.
+let _downloadedSet: Set<string> | null = null;
+
+function getDownloadedSet(): Set<string> {
+  if (_downloadedSet !== null) {
+    return _downloadedSet;
+  }
+  const db = getDb();
+  const result = db.execute('SELECT id FROM translations');
+  const rows: Array<{id: string}> = result.rows?._array ?? [];
+  _downloadedSet = new Set(rows.map(r => r.id));
+  return _downloadedSet;
+}
+
 const K = {
   translations: 'translations_list',
   books: (t: string) => `books/${t}`,
@@ -74,7 +90,10 @@ export async function getChapter(
       [translation, bookId, chapter],
     );
     const rows: Array<{verse: number; text: string}> = result.rows?._array ?? [];
-    return rows.map(r => ({chapter, verse: r.verse, text: r.text}));
+    if (rows.length > 0) {
+      return rows.map(r => ({chapter, verse: r.verse, text: r.text}));
+    }
+    // Offline storage is empty for this chapter — fall through to online
   }
 
   // 2. Online — check cache then fetch
@@ -91,16 +110,11 @@ export async function getChapter(
 // ── Download status ───────────────────────────────────────────────────────────
 
 export async function getDownloadedTranslations(): Promise<string[]> {
-  const db = getDb();
-  const result = db.execute('SELECT id FROM translations');
-  const rows: Array<{id: string}> = result.rows?._array ?? [];
-  return rows.map(r => r.id);
+  return Array.from(getDownloadedSet());
 }
 
 export async function isTranslationDownloaded(translationId: string): Promise<boolean> {
-  const db = getDb();
-  const result = db.execute('SELECT id FROM translations WHERE id = ?', [translationId]);
-  return (result.rows?._array?.length ?? 0) > 0;
+  return getDownloadedSet().has(translationId);
 }
 
 // ── Download all verses for a translation → SQLite ───────────────────────────
@@ -135,36 +149,45 @@ export async function downloadTranslation(
   _activeDownloads.add(translationId);
   const db = getDb();
 
-  for (let i = 0; i < books.length; i++) {
-    const book = books[i];
-    if (i > 0) {
-      await sleep(250); // stay under rate limit
-    }
+  try {
+    for (let i = 0; i < books.length; i++) {
+      const book = books[i];
+      if (i > 0) {
+        await sleep(250); // stay under rate limit
+      }
 
-    const bookData = await downloadBookWithRetry(translationId, book.id);
-    if (bookData) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      db.transaction((tx: any) => {
-        for (const chStr of Object.keys(bookData)) {
-          const ch = Number(chStr);
-          for (const vStr of Object.keys(bookData[chStr])) {
-            tx.execute(
-              'INSERT OR REPLACE INTO verses (translation, book, chapter, verse, text) VALUES (?, ?, ?, ?, ?)',
-              [translationId, book.id, ch, Number(vStr), bookData[chStr][vStr]],
-            );
+      const bookData = await downloadBookWithRetry(translationId, book.id);
+      if (bookData) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        db.transaction((tx: any) => {
+          for (const chStr of Object.keys(bookData)) {
+            const ch = Number(chStr);
+            for (const vStr of Object.keys(bookData[chStr])) {
+              tx.execute(
+                'INSERT OR REPLACE INTO verses (translation, book, chapter, verse, text) VALUES (?, ?, ?, ?, ?)',
+                [translationId, book.id, ch, Number(vStr), bookData[chStr][vStr]],
+              );
+            }
           }
-        }
-      });
+        });
+      }
+      onProgress((i + 1) / books.length);
     }
-    onProgress((i + 1) / books.length);
-  }
 
-  // Mark translation as downloaded — this is what isTranslationDownloaded checks
-  db.execute(
-    'INSERT OR REPLACE INTO translations (id, downloaded_at, version) VALUES (?, ?, 1)',
-    [translationId, new Date().toISOString()],
-  );
-  _activeDownloads.delete(translationId);
+    // Mark translation as downloaded in SQLite
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    db.transaction((tx: any) => {
+      tx.execute(
+        'INSERT OR REPLACE INTO translations (id, downloaded_at, version) VALUES (?, ?, 1)',
+        [translationId, new Date().toISOString()],
+      );
+    });
+    // Mirror into the in-memory set so modal re-opens reflect the state instantly
+    getDownloadedSet().add(translationId);
+  } finally {
+    // Always clean up so the modal never gets stuck in "downloading" state
+    _activeDownloads.delete(translationId);
+  }
 }
 
 // ── Delete a downloaded translation ──────────────────────────────────────────
@@ -244,17 +267,14 @@ export async function ensureKjvDownloaded(): Promise<void> {
       }
       return;
     }
-    _activeDownloads.add('KJV');
     console.log('[Bible] Downloading KJV in background...');
     const books = await getBooks('KJV');
-    await downloadTranslation('KJV', books, () => {});
+    await downloadTranslation('KJV', books, () => {}); // downloadTranslation owns _activeDownloads
     if (!getSelectedTranslation()) {
       setSelectedTranslation('KJV');
     }
     console.log('[Bible] KJV download complete');
   } catch (err) {
     console.warn('[Bible] KJV background download failed:', err);
-  } finally {
-    _activeDownloads.delete('KJV');
   }
 }
