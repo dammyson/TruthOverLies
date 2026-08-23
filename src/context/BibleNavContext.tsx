@@ -5,6 +5,7 @@ type BibleNavTarget = {
   bookName: string;
   chapter: number;
   chapterCount: number;
+  verse?: number;
 };
 
 type BibleNavContextType = {

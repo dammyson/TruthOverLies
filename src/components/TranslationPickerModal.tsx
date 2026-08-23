@@ -207,16 +207,25 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
         },
         codeSelected: {color: colors.primaryDark},
         offlineBadge: {
-          paddingHorizontal: spacing.xs,
-          paddingVertical: 1,
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing.xs + 1,
+          paddingVertical: 2,
           borderRadius: radius.sm,
-          backgroundColor: colors.primaryDark + '18',
+          backgroundColor: '#3D9A6A1A',
+          gap: 3,
+        },
+        offlineDot: {
+          width: 5,
+          height: 5,
+          borderRadius: 2.5,
+          backgroundColor: '#3D9A6A',
         },
         offlineBadgeText: {
           ...typography.caption1,
           fontSize: 10,
           fontWeight: '700',
-          color: colors.primaryDark,
+          color: '#3D9A6A',
         },
         name: {
           ...typography.subhead,
@@ -250,20 +259,19 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
           fontSize: 14,
           fontWeight: '800',
         },
-        // Downloaded (not selected)
+        // Downloaded (not selected) — green to distinguish from the active brown
         downloadedCircle: {
           width: 28,
           height: 28,
           borderRadius: 14,
-          borderWidth: 1.5,
-          borderColor: colors.primaryDark,
+          backgroundColor: '#3D9A6A',
           alignItems: 'center',
           justifyContent: 'center',
         },
         downloadedText: {
-          color: colors.primaryDark,
-          fontSize: 13,
-          fontWeight: '700',
+          color: '#fff',
+          fontSize: 14,
+          fontWeight: '800',
         },
         // Download button
         downloadCircle: {
@@ -345,7 +353,8 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
               </Text>
               {isDownloaded && (
                 <View style={styles.offlineBadge}>
-                  <Text style={styles.offlineBadgeText}>OFFLINE</Text>
+                  <View style={styles.offlineDot} />
+                  <Text style={styles.offlineBadgeText}>SAVED</Text>
                 </View>
               )}
             </View>
@@ -367,7 +376,12 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
                 onClose();
                 return;
               }
-              if (!isDownloading && !isDownloaded) {
+              if (isDownloaded) {
+                onSelect(item.id);
+                onClose();
+                return;
+              }
+              if (!isDownloading) {
                 handleDownload(item);
               }
             }}>
