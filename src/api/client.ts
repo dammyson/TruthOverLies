@@ -42,7 +42,9 @@ async function request<T>(
     throw new ApiError(response.status, message);
   }
 
-  const data = (await response.json()) as T;
+  const contentType = response.headers.get('content-type') ?? '';
+  const hasBody = response.status !== 204 && contentType.includes('json');
+  const data = hasBody ? ((await response.json()) as T) : (undefined as T);
   console.log(`[API] ✅ ${method} ${url} → ${response.status}`, data);
   return data;
 }

@@ -33,3 +33,27 @@ export type DevotionCard = {
   reference: string;
   feelings: FeelingOption[];
 };
+
+export type ScriptureCategory = {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string | null;
+  createdAt: string;
+};
+
+export type SavedScripture = {
+  id: number;
+  categoryId: number | null;
+  categoryName: string | null;
+  categoryColor: string | null;
+  translation: string;
+  bookId: string;
+  chapter: number;
+  verseStart: number;
+  verseEnd: number | null;
+  reference: string;
+  verseText: string | null;
+  moment: string | null;
+  createdAt: string;
+};

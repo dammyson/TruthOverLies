@@ -1,3 +1,6 @@
+# Claude Code internal worktrees
+.claude/worktrees/
+
 # OSX
 #
 .DS_Store

@@ -4,6 +4,7 @@ import {AppProvider} from './context/AppContext';
 import {ThemeProvider} from './context/ThemeContext';
 import {BibleNavProvider} from './context/BibleNavContext';
 import {TabNavProvider} from './context/TabNavContext';
+import {ScriptureProvider} from './context/ScriptureContext';
 import AppNavigator from './navigation/AppNavigator';
 
 function App() {
@@ -12,7 +13,9 @@ function App() {
       <AppProvider>
         <BibleNavProvider>
           <TabNavProvider>
-            <AppNavigator />
+            <ScriptureProvider>
+              <AppNavigator />
+            </ScriptureProvider>
           </TabNavProvider>
         </BibleNavProvider>
       </AppProvider>
