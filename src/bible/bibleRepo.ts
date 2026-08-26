@@ -47,7 +47,7 @@ function getDownloadedSet(): Set<string> {
 const K = {
   translations: 'translations_list',
   books: (t: string) => `books/${t}`,
-  chapter: (t: string, book: string, ch: number) => `ch/${t}/${book}/${ch}`,
+  chapter: (t: string, book: string, ch: number) => `ch/2/${t}/${book}/${ch}`,
 };
 
 // ── Translation list ──────────────────────────────────────────────────────────
@@ -103,8 +103,9 @@ export async function getChapter(
     return cached;
   }
   const res = await bibleApi.getChapterContent(bookId, chapter, translation);
-  cacheSet(cacheKey, res.items);
-  return res.items;
+  const chapVerses = res.items.filter(v => v.chapter === chapter);
+  cacheSet(cacheKey, chapVerses);
+  return chapVerses;
 }
 
 // ── Download status ───────────────────────────────────────────────────────────

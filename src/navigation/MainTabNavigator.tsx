@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Platform} from 'react-native';
 import TabView, {SceneMap} from 'react-native-bottom-tabs';
 import {useBibleNav} from '../context/BibleNavContext';
+import {useTabNav} from '../context/TabNavContext';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import BibleHomeScreen from '../screens/bible/BibleHomeScreen';
@@ -59,6 +60,11 @@ function MainTabNavigator() {
   const [index, setIndex] = useState(0);
   const {colors} = useTheme();
   const {pending} = useBibleNav();
+  const {registerJump} = useTabNav();
+
+  useEffect(() => {
+    registerJump(setIndex);
+  }, [registerJump]);
 
   useEffect(() => {
     if (pending) setIndex(BIBLE_TAB_INDEX);
