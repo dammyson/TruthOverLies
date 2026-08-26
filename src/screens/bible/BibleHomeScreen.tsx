@@ -14,8 +14,10 @@ import {useFocusEffect} from '@react-navigation/native';
 
 const TAB_BAR_HEIGHT = Platform.OS === 'android' ? 56 : 49;
 
+import {MenuView} from '@react-native-menu/menu';
 import {useTheme} from '../../context/ThemeContext';
 import {useBibleNav} from '../../context/BibleNavContext';
+import {useTabNav} from '../../context/TabNavContext';
 
 function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
   return (
@@ -25,6 +27,17 @@ function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?:
         x1="15.5" y1="15.5" x2="21" y2="21"
         stroke={color} strokeWidth="2.2" strokeLinecap="round"
       />
+    </Svg>
+  );
+}
+
+function EllipsisCircle({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+      <Circle cx="7.5" cy="12" r="1.2" fill={color} />
+      <Circle cx="12" cy="12" r="1.2" fill={color} />
+      <Circle cx="16.5" cy="12" r="1.2" fill={color} />
     </Svg>
   );
 }
@@ -40,6 +53,7 @@ import {radius, spacing} from '../../theme/spacing';
 function BibleHomeScreen() {
   const {colors, isDark} = useTheme();
   const {pending, clearPending} = useBibleNav();
+  const {jumpTo} = useTabNav();
   const insets = useSafeAreaInsets();
 
   const [bookId, setBookId] = useState('GEN');
@@ -166,14 +180,23 @@ function BibleHomeScreen() {
         header: {
           flexDirection: 'row',
           alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
+          justifyContent: 'space-between',
           paddingTop: insets.top + 10,
           paddingBottom: 12,
           paddingHorizontal: spacing.md,
           backgroundColor: colors.background,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
+        },
+        headerLeft: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+        },
+        headerRight: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
         },
         pill: {
           paddingHorizontal: 14,
@@ -295,59 +318,106 @@ function BibleHomeScreen() {
   return (
     <>
       <View style={styles.container}>
-        {/* Header — pill buttons + search icon */}
+        {/* Header — pills left, icons right */}
         <View style={styles.header}>
-          <Pressable
-            onPress={() => setBookPickerVisible(true)}
-            style={({pressed}) => [
-              styles.pill,
-              !isLiquidGlassSupported && styles.pillFallback,
-              pressed && {opacity: 0.7},
-            ]}>
-            {isLiquidGlassSupported && (
-              <LiquidGlassView
-                style={StyleSheet.absoluteFill}
-                effect="regular"
-                colorScheme={isDark ? 'dark' : 'light'}
-              />
-            )}
-            <Text style={styles.pillText}>
-              {bookName} {chapter}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setVersionPickerVisible(true)}
-            style={({pressed}) => [
-              styles.pill,
-              !isLiquidGlassSupported && styles.pillFallback,
-              pressed && {opacity: 0.7},
-            ]}>
-            {isLiquidGlassSupported && (
-              <LiquidGlassView
-                style={StyleSheet.absoluteFill}
-                effect="regular"
-                colorScheme={isDark ? 'dark' : 'light'}
-              />
-            )}
-            <Text style={styles.pillText}>{translation}</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setSearchVisible(true)}
-            style={({pressed}) => [
-              styles.iconBtn,
-              !isLiquidGlassSupported && styles.iconBtnFallback,
-              pressed && {opacity: 0.6},
-            ]}
-            hitSlop={8}>
-            {isLiquidGlassSupported && (
-              <LiquidGlassView
-                style={StyleSheet.absoluteFill}
-                effect="regular"
-                colorScheme={isDark ? 'dark' : 'light'}
-              />
-            )}
-            <MagnifyingGlass size={18} color={colors.text} />
-          </Pressable>
+          {/* Left: book/chapter + translation pills */}
+          <View style={styles.headerLeft}>
+            <Pressable
+              onPress={() => setBookPickerVisible(true)}
+              style={({pressed}) => [
+                styles.pill,
+                !isLiquidGlassSupported && styles.pillFallback,
+                pressed && {opacity: 0.7},
+              ]}>
+              {isLiquidGlassSupported && (
+                <LiquidGlassView
+                  style={StyleSheet.absoluteFill}
+                  effect="regular"
+                  colorScheme={isDark ? 'dark' : 'light'}
+                />
+              )}
+              <Text style={styles.pillText}>
+                {bookName} {chapter}
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setVersionPickerVisible(true)}
+              style={({pressed}) => [
+                styles.pill,
+                !isLiquidGlassSupported && styles.pillFallback,
+                pressed && {opacity: 0.7},
+              ]}>
+              {isLiquidGlassSupported && (
+                <LiquidGlassView
+                  style={StyleSheet.absoluteFill}
+                  effect="regular"
+                  colorScheme={isDark ? 'dark' : 'light'}
+                />
+              )}
+              <Text style={styles.pillText}>{translation}</Text>
+            </Pressable>
+          </View>
+
+          {/* Right: search + overflow menu */}
+          <View style={styles.headerRight}>
+            <Pressable
+              onPress={() => setSearchVisible(true)}
+              style={({pressed}) => [
+                styles.iconBtn,
+                !isLiquidGlassSupported && styles.iconBtnFallback,
+                pressed && {opacity: 0.6},
+              ]}
+              hitSlop={8}>
+              {isLiquidGlassSupported && (
+                <LiquidGlassView
+                  style={StyleSheet.absoluteFill}
+                  effect="regular"
+                  colorScheme={isDark ? 'dark' : 'light'}
+                />
+              )}
+              <MagnifyingGlass size={18} color={colors.text} />
+            </Pressable>
+
+            <MenuView
+              onPressAction={({nativeEvent}) => {
+                if (nativeEvent.event === 'saved') {
+                  jumpTo(1);
+                } else if (nativeEvent.event === 'settings') {
+                  jumpTo(4);
+                }
+              }}
+              actions={[
+                {
+                  id: 'saved',
+                  title: 'Saved Scriptures',
+                  image: 'bookmark',
+                  imageColor: colors.primaryDark,
+                },
+                {
+                  id: 'settings',
+                  title: 'Settings',
+                  image: 'gearshape',
+                  imageColor: colors.primaryDark,
+                },
+              ]}>
+              <Pressable
+                style={({pressed}) => [
+                  styles.iconBtn,
+                  !isLiquidGlassSupported && styles.iconBtnFallback,
+                  pressed && {opacity: 0.6},
+                ]}
+                hitSlop={8}>
+                {isLiquidGlassSupported && (
+                  <LiquidGlassView
+                    style={StyleSheet.absoluteFill}
+                    effect="regular"
+                    colorScheme={isDark ? 'dark' : 'light'}
+                  />
+                )}
+                <EllipsisCircle size={20} color={colors.text} />
+              </Pressable>
+            </MenuView>
+          </View>
         </View>
 
         <View style={{flex: 1}}>

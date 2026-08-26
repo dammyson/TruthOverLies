@@ -3,6 +3,7 @@ import React from 'react';
 import {AppProvider} from './context/AppContext';
 import {ThemeProvider} from './context/ThemeContext';
 import {BibleNavProvider} from './context/BibleNavContext';
+import {TabNavProvider} from './context/TabNavContext';
 import AppNavigator from './navigation/AppNavigator';
 
 function App() {
@@ -10,7 +11,9 @@ function App() {
     <ThemeProvider>
       <AppProvider>
         <BibleNavProvider>
-          <AppNavigator />
+          <TabNavProvider>
+            <AppNavigator />
+          </TabNavProvider>
         </BibleNavProvider>
       </AppProvider>
     </ThemeProvider>
