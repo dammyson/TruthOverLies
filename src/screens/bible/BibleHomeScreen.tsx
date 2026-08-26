@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, {Circle, Line} from 'react-native-svg';
+import Svg, {Circle, Line, Path} from 'react-native-svg';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
@@ -18,6 +18,8 @@ import {MenuView} from '@react-native-menu/menu';
 import {useTheme} from '../../context/ThemeContext';
 import {useBibleNav} from '../../context/BibleNavContext';
 import {useTabNav} from '../../context/TabNavContext';
+import {useScriptures} from '../../context/ScriptureContext';
+import SaveVerseSheet from '../../components/SaveVerseSheet';
 
 function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
   return (
@@ -54,6 +56,7 @@ function BibleHomeScreen() {
   const {colors, isDark} = useTheme();
   const {pending, clearPending} = useBibleNav();
   const {jumpTo} = useTabNav();
+  const {isVerseSaved} = useScriptures();
   const insets = useSafeAreaInsets();
 
   const [bookId, setBookId] = useState('GEN');
@@ -73,6 +76,7 @@ function BibleHomeScreen() {
   const [searchVisible, setSearchVisible] = useState(false);
 
   const [highlightVerse, setHighlightVerse] = useState<number | null>(null);
+  const [saveSheetVerse, setSaveSheetVerse] = useState<number | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
   const initialized = useRef(false);
@@ -311,6 +315,12 @@ function BibleHomeScreen() {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
         },
+        bookmarkBtn: {
+          paddingLeft: 8,
+          paddingVertical: 4,
+          alignSelf: 'flex-start',
+          marginTop: 4,
+        },
       }),
     [colors, insets],
   );
@@ -443,20 +453,38 @@ function BibleHomeScreen() {
               ref={scrollRef}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}>
-              {verses.map(v => (
-                <View
-                  key={`${bookId}-${chapter}-${v.verse}`}
-                  style={[
-                    styles.verseBlock,
-                    v.verse === highlightVerse && styles.verseHighlight,
-                  ]}
-                  onLayout={e => {
-                    verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
-                  }}>
-                  <Text style={styles.verseNum}>{v.verse}</Text>
-                  <Text style={styles.verseText}>{v.text}</Text>
-                </View>
-              ))}
+              {verses.map(v => {
+                const saved = isVerseSaved(bookId, chapter, v.verse);
+                return (
+                  <View
+                    key={`${bookId}-${chapter}-${v.verse}`}
+                    style={[
+                      styles.verseBlock,
+                      v.verse === highlightVerse && styles.verseHighlight,
+                    ]}
+                    onLayout={e => {
+                      verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
+                    }}>
+                    <Text style={styles.verseNum}>{v.verse}</Text>
+                    <Text style={styles.verseText}>{v.text}</Text>
+                    <Pressable
+                      hitSlop={8}
+                      onPress={() => setSaveSheetVerse(v.verse)}
+                      style={({pressed}) => [styles.bookmarkBtn, pressed && {opacity: 0.5}]}>
+                      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                        <Path
+                          d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
+                          stroke={saved ? colors.primaryDark : colors.muted}
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill={saved ? colors.primaryDark + '30' : 'none'}
+                        />
+                      </Svg>
+                    </Pressable>
+                  </View>
+                );
+              })}
             </ScrollView>
           )}
         </View>
@@ -504,6 +532,22 @@ function BibleHomeScreen() {
         }}
         onClose={() => setSearchVisible(false)}
       />
+
+      {saveSheetVerse != null && (() => {
+        const v = verses.find(x => x.verse === saveSheetVerse);
+        return v ? (
+          <SaveVerseSheet
+            visible
+            bookId={bookId}
+            bookName={bookName}
+            chapter={chapter}
+            verseNumber={v.verse}
+            verseText={v.text}
+            translation={translation}
+            onClose={() => setSaveSheetVerse(null)}
+          />
+        ) : null;
+      })()}
     </>
   );
 }
