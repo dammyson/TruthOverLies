@@ -205,6 +205,10 @@ function SaveVerseSheet({
           paddingTop: 12,
           paddingHorizontal: spacing.lg,
           paddingBottom: spacing.sm,
+          height: 110,
+          borderTopLeftRadius: 30,
+          borderTopRightRadius: 30,
+          marginTop: 10,
         },
         grabber: {
           width: 36,
@@ -377,7 +381,8 @@ function SaveVerseSheet({
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+      onDismiss={onClose}>
       <View style={styles.sheet}>
         <KeyboardAvoidingView
           style={{flex: 1}}
@@ -392,7 +397,6 @@ function SaveVerseSheet({
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.headerGradient}>
-            <View style={styles.grabber} />
             <Text style={styles.headerLabel}>SAVE SCRIPTURE</Text>
             <Text style={styles.headerReference}>{reference}</Text>
             <Text style={styles.headerTranslation}>{translation}</Text>

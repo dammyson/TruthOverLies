@@ -4,7 +4,8 @@
       "Bash(npm install:*)",
       "Bash(npm view:*)",
       "Bash(/usr/local/bin/pod install:*)",
-      "Bash(pod install *)"
+      "Bash(pod install *)",
+      "WebFetch(domain:test-api.truthoverlies.cloud)"
     ]
   }
 }
