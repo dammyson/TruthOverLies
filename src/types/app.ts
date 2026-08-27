@@ -42,6 +42,15 @@ export type ScriptureCategory = {
   createdAt: string;
 };
 
+export type Journal = {
+  id: number;
+  entryText: string;
+  feelingId: number | null;
+  struggle: string | null;
+  savedScriptureId: number | null;
+  createdAt: string;
+};
+
 export type SavedScripture = {
   id: number;
   categoryId: number | null;

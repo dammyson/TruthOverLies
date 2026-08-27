@@ -1,18 +1,54 @@
-import React, {useMemo} from 'react';
-import { StyleSheet, Text, View} from 'react-native';
+import React, {useMemo, useRef, useState} from 'react';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
+import Svg, {Path} from 'react-native-svg';
 
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
+import {useJournals} from '../../context/JournalContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+import {Journal} from '../../types/app';
+import JournalListModal from '../journal/JournalListModal';
+import JournalEntrySheet from '../journal/JournalEntrySheet';
 
 function ProfileScreen() {
   const {currentUser, savedCards, selectedFeelings} = useAppContext();
   const {colors, isDark} = useTheme();
+  const {journals} = useJournals();
   const glassScheme = isDark ? 'dark' : 'light';
+
+  const [journalOpen, setJournalOpen] = useState(false);
+  const [entryOpen, setEntryOpen] = useState(false);
+  const [editingEntry, setEditingEntry] = useState<Journal | null>(null);
+  const pendingEntry = useRef<{entry: Journal | null} | null>(null);
+
+  const handleNewEntry = () => {
+    pendingEntry.current = {entry: null};
+    setJournalOpen(false);
+  };
+
+  const handleEditEntry = (entry: Journal) => {
+    pendingEntry.current = {entry};
+    setJournalOpen(false);
+  };
+
+  const handleListDismiss = () => {
+    setJournalOpen(false);
+    if (pendingEntry.current !== null) {
+      const p = pendingEntry.current;
+      pendingEntry.current = null;
+      setEditingEntry(p.entry);
+      setEntryOpen(true);
+    }
+  };
+
+  const handleEntryClose = () => {
+    setEntryOpen(false);
+    setJournalOpen(true);
+  };
 
   const styles = useMemo(
     () =>
@@ -128,6 +164,23 @@ function ProfileScreen() {
           ...typography.headline,
           color: colors.white,
         },
+        journalBadge: {
+          paddingHorizontal: 8,
+          paddingVertical: 2,
+          borderRadius: radius.full,
+          backgroundColor: isDark ? '#3E2010' : '#F0E4D4',
+          marginLeft: spacing.xs,
+        },
+        journalBadgeText: {
+          ...typography.caption1,
+          fontWeight: '700',
+          color: colors.primaryDark,
+        },
+        journalSubtitle: {
+          ...typography.footnote,
+          color: colors.muted,
+          marginTop: 2,
+        },
       }),
     [colors],
   );
@@ -193,8 +246,54 @@ function ProfileScreen() {
               </View>
             </View>
           </View>
+
+          {/* Journal panel */}
+          <Pressable
+            style={({pressed}) => [styles.panelWrapper, pressed && {opacity: 0.8}]}
+            onPress={() => setJournalOpen(true)}>
+            {isLiquidGlassSupported && (
+              <LiquidGlassView style={styles.panelGlass} effect="clear" colorScheme={glassScheme} />
+            )}
+            <View style={styles.panelContent}>
+              <View style={styles.row}>
+                <Text style={[styles.panelTitle, {marginBottom: 0}]}>Journal</Text>
+                {journals.length > 0 && (
+                  <View style={styles.journalBadge}>
+                    <Text style={styles.journalBadgeText}>{journals.length}</Text>
+                  </View>
+                )}
+                <Svg width={16} height={16} viewBox="0 0 24 24" fill="none" style={{marginLeft: 'auto'}}>
+                  <Path
+                    d="M9 18l6-6-6-6"
+                    stroke={colors.muted}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </Svg>
+              </View>
+              <Text style={styles.journalSubtitle}>
+                {journals.length === 0
+                  ? 'Your private space with God'
+                  : `${journals.length} entr${journals.length === 1 ? 'y' : 'ies'}`}
+              </Text>
+            </View>
+          </Pressable>
         </View>
       </View>
+
+      <JournalListModal
+        visible={journalOpen}
+        onClose={() => setJournalOpen(false)}
+        onDismiss={handleListDismiss}
+        onNewEntry={handleNewEntry}
+        onEditEntry={handleEditEntry}
+      />
+      <JournalEntrySheet
+        visible={entryOpen}
+        entry={editingEntry}
+        onClose={handleEntryClose}
+      />
     </ScreenShell>
   );
 }
