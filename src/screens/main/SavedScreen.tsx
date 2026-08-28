@@ -27,6 +27,9 @@ import {SavedScripture} from '../../types/app';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import {RootStackParamList} from '../../navigation/RootNavigator';
+import ShareCardSheet from '../../components/share/ShareCardSheet';
+import ShareIconButton from '../../components/share/ShareIconButton';
+import {ShareCardPayload, sharePayloadFromDevotion, sharePayloadFromScripture} from '../../types/share';
 
 type Tab = 'devotions' | 'scriptures';
 
@@ -66,11 +69,13 @@ function TrashIcon({size = 16, color = '#B85B5B'}) {
 function ScriptureCard({
   scripture,
   onDelete,
+  onShare,
   colors,
   isDark,
 }: {
   scripture: SavedScripture;
   onDelete: () => void;
+  onShare: () => void;
   colors: ReturnType<typeof import('../../context/ThemeContext').useTheme>['colors'];
   isDark: boolean;
 }) {
@@ -169,6 +174,11 @@ function ScriptureCard({
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: accentColor + '35',
         },
+        footerActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 4,
+        },
         dateText: {fontSize: 11, color: isDark ? '#7E7B6E' : '#A8A498', letterSpacing: 0.3},
         deleteBtn: {padding: 4},
       }),
@@ -221,9 +231,12 @@ function ScriptureCard({
         ) : null}
         <View style={cardStyles.footer}>
           <Text style={cardStyles.dateText}>{formattedDate} · {scripture.translation}</Text>
-          <Pressable style={cardStyles.deleteBtn} onPress={onDelete} hitSlop={8}>
-            <TrashIcon color="#B85B5B" />
-          </Pressable>
+          <View style={cardStyles.footerActions}>
+            <ShareIconButton onPress={onShare} color={accentColor} />
+            <Pressable style={cardStyles.deleteBtn} onPress={onDelete} hitSlop={8}>
+              <TrashIcon color="#B85B5B" />
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>
@@ -241,6 +254,15 @@ function SavedScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>('devotions');
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
+  const [sharePayload, setSharePayload] = useState<ShareCardPayload | null>(null);
+
+  const openShare = useCallback((payload: ShareCardPayload) => {
+    if (payload.kind === 'scripture' && !payload.verse.trim()) {
+      Alert.alert('Nothing to share', 'This saved verse has no text yet.');
+      return;
+    }
+    setSharePayload(payload);
+  }, []);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
   const [segWidth, setSegWidth] = useState(0);
@@ -446,6 +468,11 @@ function SavedScreen() {
           padding: spacing.md,
           gap: spacing.sm,
         },
+        cardActions: {
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingVertical: spacing.xs,
+        },
         accentBar: {
           width: 3,
           borderRadius: 2,
@@ -599,6 +626,7 @@ function SavedScreen() {
                 key={s.id}
                 scripture={s}
                 onDelete={() => handleDelete(s)}
+                onShare={() => openShare(sharePayloadFromScripture(s))}
                 colors={colors}
                 isDark={isDark}
               />
@@ -630,32 +658,44 @@ function SavedScreen() {
             </View>
           ) : (
             savedCards.map(card => (
-              <Pressable
-                key={card.id}
-                accessibilityRole="button"
-                onPress={() => navigation.navigate('SavedDetail', {card})}
-                style={({pressed}) => [styles.cardWrapper, pressed && {opacity: 0.75}]}>
+              <View key={card.id} style={styles.cardWrapper}>
                 {isLiquidGlassSupported && (
                   <LiquidGlassView style={styles.cardGlass} effect="regular" colorScheme={glassScheme} />
                 )}
                 <View style={styles.cardContent}>
-                  <View style={styles.accentBar} />
-                  <View style={styles.cardBody}>
-                    <Text style={styles.cardTitle}>{card.title}</Text>
-                    <Text style={styles.cardExcerpt} numberOfLines={2}>
-                      {card.encouragement}
-                    </Text>
-                    <View style={styles.referenceRow}>
-                      <View style={styles.referenceDot} />
-                      <VerseLink reference={card.reference} style={styles.referenceText} />
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => navigation.navigate('SavedDetail', {card})}
+                    style={({pressed}) => [{flex: 1, flexDirection: 'row', gap: spacing.sm}, pressed && {opacity: 0.75}]}>
+                    <View style={styles.accentBar} />
+                    <View style={styles.cardBody}>
+                      <Text style={styles.cardTitle}>{card.title}</Text>
+                      <Text style={styles.cardExcerpt} numberOfLines={2}>
+                        {card.encouragement}
+                      </Text>
+                      <View style={styles.referenceRow}>
+                        <View style={styles.referenceDot} />
+                        <VerseLink reference={card.reference} style={styles.referenceText} />
+                      </View>
                     </View>
+                  </Pressable>
+                  <View style={styles.cardActions}>
+                    <ShareIconButton
+                      onPress={() => openShare(sharePayloadFromDevotion(card))}
+                      color={colors.primaryDark}
+                    />
                   </View>
                 </View>
-              </Pressable>
+              </View>
             ))
           )}
         </>
       )}
+      <ShareCardSheet
+        visible={sharePayload != null}
+        payload={sharePayload}
+        onClose={() => setSharePayload(null)}
+      />
     </ScreenShell>
   );
 }

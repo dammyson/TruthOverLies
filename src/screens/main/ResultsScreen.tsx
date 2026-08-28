@@ -1,18 +1,22 @@
-import React, {useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
 import VerseLink from '../../components/VerseLink';
+import ShareCardSheet from '../../components/share/ShareCardSheet';
+import ShareIconButton from '../../components/share/ShareIconButton';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+import {ShareCardPayload, sharePayloadFromDevotion} from '../../types/share';
 
 function ResultsScreen() {
   const {devotionCards, selectedFeelings, toggleSavedCard, isSaved} = useAppContext();
   const {colors, isDark} = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
+  const [sharePayload, setSharePayload] = useState<ShareCardPayload | null>(null);
 
   const styles = useMemo(
     () =>
@@ -66,6 +70,11 @@ function ResultsScreen() {
           justifyContent: 'space-between',
           marginBottom: spacing.sm,
           gap: spacing.sm,
+        },
+        cardActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.xs,
         },
         cardMeta: {
           flex: 1,
@@ -169,15 +178,21 @@ function ResultsScreen() {
                     <Text style={styles.cardBadge}>{badge}</Text>
                     <Text style={styles.cardTitle}>{card.title}</Text>
                   </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={saved ? 'Remove from saved' : 'Save'}
-                    onPress={() => toggleSavedCard(card)}
-                    style={[styles.saveButton, saved && styles.saveButtonActive]}>
-                    <Text style={[styles.saveButtonText, saved && styles.saveButtonTextActive]}>
-                      {saved ? '✓' : '+'}
-                    </Text>
-                  </Pressable>
+                  <View style={styles.cardActions}>
+                    <ShareIconButton
+                      onPress={() => setSharePayload(sharePayloadFromDevotion(card))}
+                      color={colors.primaryDark}
+                    />
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={saved ? 'Remove from saved' : 'Save'}
+                      onPress={() => toggleSavedCard(card)}
+                      style={[styles.saveButton, saved && styles.saveButtonActive]}>
+                      <Text style={[styles.saveButtonText, saved && styles.saveButtonTextActive]}>
+                        {saved ? '✓' : '+'}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
 
                 <Text style={styles.cardBody}>{card.encouragement}</Text>
@@ -198,6 +213,12 @@ function ResultsScreen() {
           );
         })}
       </View>
+
+      <ShareCardSheet
+        visible={sharePayload != null}
+        payload={sharePayload}
+        onClose={() => setSharePayload(null)}
+      />
     </ScreenShell>
   );
 }
