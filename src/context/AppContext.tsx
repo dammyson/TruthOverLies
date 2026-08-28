@@ -10,6 +10,7 @@ import React, {
 import * as authApi from '../api/auth';
 import * as devotionsApi from '../api/devotions';
 import * as feelingsApi from '../api/feelings';
+import {feelingsFromIds, parseFeelingNames} from '../utils/feelings';
 import {ApiError} from '../api/types';
 import storage from '../cache/storage';
 import CACHE_KEYS from '../cache/keys';
@@ -126,16 +127,25 @@ function AppProvider({children}: {children: ReactNode}) {
     setIsCatalogLoading(false);
 
     if (savedResult.status === 'fulfilled') {
-      const cards: DevotionCard[] = savedResult.value.flatMap(saved =>
-        saved.cards.map(c => ({
-          id: `saved-${saved.id}-${c.id ?? c.title}`,
-          title: c.title,
-          encouragement: c.encouragement,
-          verse: c.verse,
-          reference: c.reference,
-          feelings: [],
-        })),
-      );
+      const catalogItems =
+        catalogResult.status === 'fulfilled'
+          ? catalogResult.value.map(f => ({id: f.id, name: f.name}))
+          : [];
+
+      const cards: DevotionCard[] = savedResult.value.flatMap(saved => {
+        const checkFeelings = feelingsFromIds(saved.feeling_ids, catalogItems);
+        return saved.cards.map(c => {
+          const cardFeelings = parseFeelingNames([c.feeling]);
+          return {
+            id: `saved-${saved.id}-${c.id ?? c.title}`,
+            title: c.title,
+            encouragement: c.encouragement,
+            verse: c.verse,
+            reference: c.reference,
+            feelings: cardFeelings.length > 0 ? cardFeelings : checkFeelings,
+          };
+        });
+      });
       setSavedCards(cards);
     }
     setIsSavedLoading(false);
