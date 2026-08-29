@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import Svg, {Circle, Line} from 'react-native-svg';
+import CloseButton from './CloseButton';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTheme} from '../context/ThemeContext';
 import * as bibleRepo from '../bible/bibleRepo';
@@ -324,14 +325,6 @@ function BibleSearchModal({visible, translation, onSelect, onClose}: Props) {
           alignItems: 'center',
           justifyContent: 'center',
         },
-        closeCircle: {
-          width: 38,
-          height: 38,
-          borderRadius: 19,
-          backgroundColor: colors.surfaceStrong,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
       }),
     [colors, insets],
   );
@@ -469,12 +462,7 @@ function BibleSearchModal({visible, translation, onSelect, onClose}: Props) {
                 </Pressable>
               )}
             </View>
-            <Pressable
-              onPress={onClose}
-              style={({pressed}) => [s.closeCircle, pressed && {opacity: 0.5}]}
-              hitSlop={8}>
-              <XMark size={14} color={colors.muted} />
-            </Pressable>
+            <CloseButton onPress={onClose} />
           </View>
         </KeyboardAvoidingView>
       </View>

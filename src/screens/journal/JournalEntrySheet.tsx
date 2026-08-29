@@ -17,9 +17,24 @@ import dayjs from 'dayjs';
 import Svg, {Path} from 'react-native-svg';
 import {useTheme} from '../../context/ThemeContext';
 import {useJournals} from '../../context/JournalContext';
+import CloseButton from '../../components/CloseButton';
 import {Journal} from '../../types/app';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+
+function TrashIcon({color}: {color: string}) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M12 11v6M14 11v6"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 type Props = {
   visible: boolean;
@@ -87,71 +102,103 @@ function JournalEntrySheet({visible, entry, onClose}: Props) {
     return d.format('ddd, D MMM YYYY');
   }, [entry]);
 
+  // Colors
+  const primaryDark = '#361f1a';
+  const shadowColor = isDark ? 'rgba(54,31,26,0.35)' : 'rgba(54,31,26,0.12)';
+  const deleteColor = '#FFFDF5';
+  const deleteBtnBg = 'rgba(255,253,245,0.12)';
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
         sheet: {flex: 1, backgroundColor: colors.background},
-        header: {
-          paddingTop: spacing.md,
+        kav: {flex: 1},
+        grabber: {
+          width: 36,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: colors.border,
+          alignSelf: 'center',
+          marginTop: spacing.sm,
+          marginBottom: spacing.xs,
+        },
+        // ── Header ─────────────────────────────────────────────────
+        closeRow: {
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
           paddingHorizontal: spacing.lg,
-          paddingBottom: spacing.md,
-          borderTopLeftRadius: 30,
-          borderTopRightRadius: 30,
-          marginTop: 10,
-          height: 120
+          paddingTop: spacing.xs,
+          paddingBottom: spacing.sm,
+        },
+        headerWrapper: {
+          paddingHorizontal: spacing.lg,
+          paddingBottom: spacing.lg,
+        },
+        headerCard: {
+          backgroundColor: primaryDark,
+          borderRadius: 24,
+          padding: spacing.lg,
         },
         headerLabel: {
           ...typography.caption1,
           fontWeight: '700',
-          color: 'rgba(255,255,255,0.65)',
-          letterSpacing: 1.2,
+          color: 'rgba(255,255,255,0.5)',
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
           marginBottom: spacing.xs,
         },
         headerDate: {
-          ...typography.title3,
+          ...typography.title2,
           fontWeight: '800',
           color: '#FFFDF5',
+          letterSpacing: -0.3,
         },
         deleteBtn: {
           position: 'absolute',
-          top: 30 + spacing.md,
-          right: spacing.xl,
-          padding: 6,
-          zIndex: 10,
+          top: spacing.md,
+          right: spacing.md,
+          padding: 8,
+          borderRadius: radius.lg,
         },
-        body: {flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.md},
+        // ── Body ───────────────────────────────────────────────────
+        body: {
+          flex: 1,
+          paddingHorizontal: spacing.lg,
+          paddingTop: spacing.sm,
+        },
+        fieldBlock: {
+          marginBottom: spacing.lg,
+        },
         sectionLabel: {
           ...typography.caption1,
           fontWeight: '700',
           color: colors.muted,
-          letterSpacing: 0.8,
-          marginBottom: spacing.xs,
-          marginTop: spacing.md,
+          letterSpacing: 0.9,
+          textTransform: 'uppercase',
+          marginBottom: spacing.sm,
+        },
+        fieldShadow: {
+          position: 'absolute',
+          top: 5,
+          left: 0,
+          right: 0,
+          bottom: -5,
+          borderRadius: 20,
         },
         fieldCard: {
-          borderRadius: radius.xl,
-          backgroundColor: isDark ? '#2A2218' : '#FDFAF5',
+          borderRadius: 20,
+          backgroundColor: isDark ? '#1E1A14' : '#FFFFFF',
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
-          overflow: 'hidden' as const,
-          marginBottom: spacing.md,
-        },
-        fieldAccentBar: {
-          height: 3,
-          borderTopLeftRadius: radius.xl,
-          borderTopRightRadius: radius.xl,
-        },
-        fieldInner: {
           paddingHorizontal: spacing.md,
-          paddingTop: spacing.sm,
-          paddingBottom: spacing.sm,
+          paddingVertical: spacing.md,
         },
         textInput: {
           ...typography.body,
           color: colors.text,
           lineHeight: 26,
           textAlignVertical: 'top',
-          minHeight: 200,
+          minHeight: 190,
           paddingTop: 0,
         },
         struggleInput: {
@@ -159,33 +206,36 @@ function JournalEntrySheet({visible, entry, onClose}: Props) {
           color: colors.text,
           lineHeight: 22,
           textAlignVertical: 'top',
-          minHeight: 80,
+          minHeight: 90,
           paddingTop: 0,
         },
-        saveBar: {
+        // ── Save bar ───────────────────────────────────────────────
+        saveBarOuter: {
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.sm,
           paddingBottom: spacing.xl,
-          backgroundColor: colors.background,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
         },
         saveBtn: {
-          borderRadius: radius.xl,
+          height: 52,
+          borderRadius: radius.lg,
           overflow: 'hidden',
-          height: 50,
-          justifyContent: 'center',
+          backgroundColor: primaryDark,
+          flexDirection: 'row',
           alignItems: 'center',
+          justifyContent: 'center',
         },
-        saveBtnGradient: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0},
         saveBtnText: {
           ...typography.headline,
           fontWeight: '700',
           color: '#FFFDF5',
           letterSpacing: 0.3,
         },
+        saveBtnDisabled: {
+          opacity: 0.45,
+        },
       }),
-    [colors],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [colors, isDark],
   );
 
   return (
@@ -197,106 +247,120 @@ function JournalEntrySheet({visible, entry, onClose}: Props) {
       onDismiss={onClose}>
       <View style={styles.sheet}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={styles.kav}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <LinearGradient
-            colors={isDark ? ['#3E2010', '#2D160A', '#1A0E06'] : ['#5C3020', '#3E1E10', '#2D160E']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.header}>
-            <Text style={styles.headerLabel}>
-              {isEditing ? 'EDIT ENTRY' : 'NEW ENTRY'}
-            </Text>
-            <Text style={styles.headerDate}>{formattedDate}</Text>
-          </LinearGradient>
 
-          {/* Floats above gradient — outside its clipping bounds */}
-          {isEditing && (
-            <Pressable style={styles.deleteBtn} onPress={handleDelete} hitSlop={8}>
-              <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-                <Path
-                  d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
-                  stroke="rgba(255,80,80,0.9)"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </Pressable>
-          )}
+          <View style={styles.grabber} />
+          {/* Close button — above the card */}
+          <View style={styles.closeRow}>
+            <CloseButton onPress={onClose} />
+          </View>
+
+          {/* Header card */}
+          <View style={styles.headerWrapper}>
+            <View style={styles.headerCard}>
+              <Text style={styles.headerLabel}>
+                {isEditing ? 'Edit Entry' : 'New Entry'}
+              </Text>
+              <Text style={styles.headerDate}>{formattedDate}</Text>
+
+              {isEditing && (
+                <Pressable
+                  style={({pressed}) => [
+                    styles.deleteBtn,
+                    {backgroundColor: deleteBtnBg},
+                    pressed && {opacity: 0.65},
+                  ]}
+                  onPress={handleDelete}
+                  hitSlop={8}>
+                  <TrashIcon color={deleteColor} />
+                </Pressable>
+              )}
+            </View>
+          </View>
 
           <ScrollView
             style={styles.body}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
-            <Text style={styles.sectionLabel}>WHAT'S ON YOUR HEART</Text>
-            <View style={styles.fieldCard}>
-              <LinearGradient
-                colors={isDark ? ['#5C3020', '#3E1E10'] : ['#8B5E3C', '#6B4030']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
-                style={styles.fieldAccentBar}
-              />
-              <View style={styles.fieldInner}>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Write freely — this is your space with God..."
-                  placeholderTextColor={colors.placeholder}
-                  value={entryText}
-                  onChangeText={setEntryText}
-                  multiline
-                  maxLength={5000}
-                  autoFocus={!isEditing}
-                />
+
+            {/* Main entry field */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.sectionLabel}>What's on your heart</Text>
+              <View>
+                <View style={[styles.fieldShadow, {backgroundColor: shadowColor}]} />
+                <View style={styles.fieldCard}>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Write freely — this is your space with God..."
+                    placeholderTextColor={colors.placeholder}
+                    value={entryText}
+                    onChangeText={setEntryText}
+                    multiline
+                    maxLength={5000}
+                    autoFocus={!isEditing}
+                  />
+                </View>
               </View>
             </View>
 
-            <Text style={styles.sectionLabel}>WHAT ARE YOU STRUGGLING WITH? (optional)</Text>
-            <View style={styles.fieldCard}>
-              <LinearGradient
-                colors={['#8B4A4A', '#6B3030']}
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
-                style={styles.fieldAccentBar}
-              />
-              <View style={styles.fieldInner}>
-                <TextInput
-                  style={styles.struggleInput}
-                  placeholder="Name the struggle, give it to God..."
-                  placeholderTextColor={colors.placeholder}
-                  value={struggle}
-                  onChangeText={setStruggle}
-                  multiline
-                  maxLength={250}
-                />
+            {/* Struggle field */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.sectionLabel}>What are you struggling with? (optional)</Text>
+              <View>
+                <View style={[styles.fieldShadow, {backgroundColor: shadowColor}]} />
+                <View style={styles.fieldCard}>
+                  <TextInput
+                    style={styles.struggleInput}
+                    placeholder="Name the struggle, give it to God..."
+                    placeholderTextColor={colors.placeholder}
+                    value={struggle}
+                    onChangeText={setStruggle}
+                    multiline
+                    maxLength={250}
+                  />
+                </View>
               </View>
             </View>
+
+            {/* Bottom padding so content doesn't hide behind save bar */}
+            <View style={{height: spacing.xl}} />
           </ScrollView>
 
-          <View style={styles.saveBar}>
-            <Pressable
-              style={({pressed}) => [styles.saveBtn, pressed && {opacity: 0.85}]}
-              onPress={handleSave}
-              disabled={isSaving || !entryText.trim()}>
-              <LinearGradient
-                colors={
-                  isDark
-                    ? ['#6B4E1A', '#4A3410', '#2D1E08']
-                    : ['#8B5E3C', '#5C3020', '#3E1E10']
-                }
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
-                style={styles.saveBtnGradient}
-              />
-              {isSaving ? (
-                <ActivityIndicator color="#FFFDF5" />
-              ) : (
-                <Text style={styles.saveBtnText}>
-                  {isEditing ? 'Save Changes' : 'Save Entry'}
-                </Text>
-              )}
-            </Pressable>
+          {/* Save bar with gradient fade */}
+          <View>
+            <LinearGradient
+              colors={[
+                isDark ? 'rgba(14,10,6,0)' : 'rgba(255,253,245,0)',
+                isDark ? 'rgba(14,10,6,1)' : 'rgba(255,253,245,1)',
+              ]}
+              style={{height: 28, marginBottom: -1}}
+              pointerEvents="none"
+            />
+            <View
+              style={[
+                styles.saveBarOuter,
+                {backgroundColor: isDark ? '#0E0A06' : colors.background},
+              ]}>
+              <Pressable
+                style={({pressed}) => [
+                  styles.saveBtn,
+                  (isSaving || !entryText.trim()) && styles.saveBtnDisabled,
+                  pressed && {opacity: 0.8},
+                ]}
+                onPress={handleSave}
+                disabled={isSaving || !entryText.trim()}>
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFDF5" />
+                ) : (
+                  <Text style={styles.saveBtnText}>
+                    {isEditing ? 'Save Changes' : 'Save Entry'}
+                  </Text>
+                )}
+              </Pressable>
+            </View>
           </View>
+
         </KeyboardAvoidingView>
       </View>
     </Modal>

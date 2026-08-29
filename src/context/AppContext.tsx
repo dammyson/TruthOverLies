@@ -57,12 +57,10 @@ function AppProvider({children}: {children: ReactNode}) {
   const [isSavedLoading, setIsSavedLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState('');
   const [authMessageTone, setAuthMessageTone] = useState<AuthMessageTone>('error');
-  const [selectedFeelings, setSelectedFeelings] = useState<FeelingOption[]>(['Hopeful']);
+  const [selectedFeelings, setSelectedFeelings] = useState<FeelingOption[]>([]);
   const [feelingsCatalog, setFeelingsCatalog] = useState<FeelingItem[]>([]);
   const [lastCheckId, setLastCheckId] = useState<number | null>(null);
-  const [devotionCards, setDevotionCards] = useState<DevotionCard[]>(
-    buildDevotions(['Hopeful']),
-  );
+  const [devotionCards, setDevotionCards] = useState<DevotionCard[]>([]);
   const [savedCards, setSavedCards] = useState<DevotionCard[]>([]);
 
   // ── Session restore ──────────────────────────────────────────────────────
@@ -82,7 +80,7 @@ function AppProvider({children}: {children: ReactNode}) {
       if (token && profile) {
         setAuthToken(token);
         setCurrentUser(profile);
-        loadUserData(token);
+        loadUserData(token, !!cachedCatalog);
         ensureKjvDownloaded(); // ensure KJV is present on every app start
 
         // Refresh profile silently
@@ -105,50 +103,55 @@ function AppProvider({children}: {children: ReactNode}) {
     restoreSession();
   }, []);
 
-  async function loadUserData(token: string) {
-    setIsCatalogLoading(true);
+  async function loadUserData(token: string, silentCatalog = false) {
+    if (!silentCatalog) {
+      setIsCatalogLoading(true);
+    }
     setIsSavedLoading(true);
 
-    const [catalogResult, savedResult] = await Promise.allSettled([
-      feelingsApi.getFeelingsCatalog(token),
-      devotionsApi.getSavedDevotions(token),
-    ]);
+    try {
+      const [catalogResult, savedResult] = await Promise.allSettled([
+        feelingsApi.getFeelingsCatalog(token),
+        devotionsApi.getSavedDevotions(token),
+      ]);
 
-    if (catalogResult.status === 'fulfilled') {
-      const catalog: FeelingItem[] = catalogResult.value.map(f => ({
-        id: f.id,
-        name: f.name,
-        category: f.category,
-        subcategory: f.subcategory,
-      }));
-      setFeelingsCatalog(catalog);
-      storage.set(CACHE_KEYS.FEELINGS_CATALOG, catalog);
-    }
-    setIsCatalogLoading(false);
+      if (catalogResult.status === 'fulfilled' && Array.isArray(catalogResult.value)) {
+        const catalog: FeelingItem[] = catalogResult.value.map(f => ({
+          id: f.id,
+          name: f.name,
+          category: f.category,
+          subcategory: f.subcategory,
+        }));
+        setFeelingsCatalog(catalog);
+        storage.set(CACHE_KEYS.FEELINGS_CATALOG, catalog);
+      }
 
-    if (savedResult.status === 'fulfilled') {
-      const catalogItems =
-        catalogResult.status === 'fulfilled'
-          ? catalogResult.value.map(f => ({id: f.id, name: f.name}))
-          : [];
+      if (savedResult.status === 'fulfilled' && Array.isArray(savedResult.value)) {
+        const catalogItems =
+          catalogResult.status === 'fulfilled' && Array.isArray(catalogResult.value)
+            ? catalogResult.value.map(f => ({id: f.id, name: f.name}))
+            : [];
 
-      const cards: DevotionCard[] = savedResult.value.flatMap(saved => {
-        const checkFeelings = feelingsFromIds(saved.feeling_ids, catalogItems);
-        return saved.cards.map(c => {
-          const cardFeelings = parseFeelingNames([c.feeling]);
-          return {
-            id: `saved-${saved.id}-${c.id ?? c.title}`,
-            title: c.title,
-            encouragement: c.encouragement,
-            verse: c.verse,
-            reference: c.reference,
-            feelings: cardFeelings.length > 0 ? cardFeelings : checkFeelings,
-          };
+        const cards: DevotionCard[] = savedResult.value.flatMap(saved => {
+          const checkFeelings = feelingsFromIds(saved.feeling_ids, catalogItems);
+          return saved.cards.map(c => {
+            const cardFeelings = parseFeelingNames([c.feeling]);
+            return {
+              id: `saved-${saved.id}-${c.id ?? c.title}`,
+              title: c.title,
+              encouragement: c.encouragement,
+              verse: c.verse,
+              reference: c.reference,
+              feelings: cardFeelings.length > 0 ? cardFeelings : checkFeelings,
+            };
+          });
         });
-      });
-      setSavedCards(cards);
+        setSavedCards(cards);
+      }
+    } finally {
+      setIsCatalogLoading(false);
+      setIsSavedLoading(false);
     }
-    setIsSavedLoading(false);
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -293,7 +296,7 @@ function AppProvider({children}: {children: ReactNode}) {
         feelings: selectedFeelings,
       }));
 
-      setDevotionCards(cards.length > 0 ? cards : buildDevotions(selectedFeelings));
+      setDevotionCards(cards.length > 0 ? cards : buildDevotions(parseFeelingNames(selectedFeelings)));
 
       // Log each selected feeling (fire-and-forget)
       selectedFeelings.forEach(name => {
@@ -305,8 +308,8 @@ function AppProvider({children}: {children: ReactNode}) {
 
       return true;
     } catch {
-      // Network/server error — fall back to local devotions
-      setDevotionCards(buildDevotions(selectedFeelings));
+      // Network/server error — fall back to local devotions mapped to known keys
+      setDevotionCards(buildDevotions(parseFeelingNames(selectedFeelings)));
       return true;
     }
   };

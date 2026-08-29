@@ -33,7 +33,8 @@ type Props = {
   bookId: string;
   bookName: string;
   chapter: number;
-  verseNumber: number;
+  verseStart: number;
+  verseEnd?: number;
   verseText: string;
   translation: string;
   onClose: () => void;
@@ -104,7 +105,8 @@ function SaveVerseSheet({
   bookId,
   bookName,
   chapter,
-  verseNumber,
+  verseStart,
+  verseEnd,
   verseText,
   translation,
   onClose,
@@ -156,14 +158,17 @@ function SaveVerseSheet({
     }
   }, [visible]);
 
-  const reference = `${bookName} ${chapter}:${verseNumber}`;
+  const reference = verseEnd
+    ? `${bookName} ${chapter}:${verseStart}-${verseEnd}`
+    : `${bookName} ${chapter}:${verseStart}`;
 
   const handleSave = useCallback(async () => {
     try {
       await saveVerse({
         bookId,
         chapter,
-        verseStart: verseNumber,
+        verseStart,
+        verseEnd,
         translation,
         reference,
         verseText,
@@ -175,7 +180,7 @@ function SaveVerseSheet({
     } catch {
       // error handled by context
     }
-  }, [saveVerse, bookId, chapter, verseNumber, translation, reference, verseText, moment, selectedCategoryId, onSaved, onClose]);
+  }, [saveVerse, bookId, chapter, verseStart, verseEnd, translation, reference, verseText, moment, selectedCategoryId, onSaved, onClose]);
 
   const handleCreateCategory = useCallback(async () => {
     if (!newCatName.trim()) return;
@@ -397,6 +402,7 @@ function SaveVerseSheet({
             start={{x: 0, y: 0}}
             end={{x: 1, y: 1}}
             style={styles.headerGradient}>
+            <View style={styles.grabber} />
             <Text style={styles.headerLabel}>SAVE SCRIPTURE</Text>
             <Text style={styles.headerReference}>{reference}</Text>
             <Text style={styles.headerTranslation}>{translation}</Text>

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import {useTheme} from '../context/ThemeContext';
+import CloseButton from './CloseButton';
 import * as bibleApi from '../api/bible';
 import * as bibleRepo from '../bible/bibleRepo';
 import {typography} from '../theme/typography';
@@ -138,10 +139,16 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
           marginBottom: spacing.md,
         },
         header: {
+          flexDirection: 'row',
+          alignItems: 'flex-start',
           paddingHorizontal: spacing.lg,
           paddingBottom: spacing.md,
           borderBottomWidth: StyleSheet.hairlineWidth,
           borderBottomColor: colors.border,
+          gap: spacing.sm,
+        },
+        headerMain: {
+          flex: 1,
         },
         title: {
           ...typography.title2,
@@ -426,10 +433,13 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
         <View style={styles.grabber} />
 
         <View style={styles.header}>
-          <Text style={styles.title}>Bible Version</Text>
-          <Text style={styles.subtitle}>
-            Tap to select · Download for offline reading
-          </Text>
+          <View style={styles.headerMain}>
+            <Text style={styles.title}>Bible Version</Text>
+            <Text style={styles.subtitle}>
+              Tap to select · Download for offline reading
+            </Text>
+          </View>
+          <CloseButton onPress={onClose} />
         </View>
 
         {loading ? (

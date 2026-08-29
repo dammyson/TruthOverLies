@@ -1,5 +1,5 @@
 import React, {ReactNode, useMemo} from 'react';
-import {StyleSheet, Text, View} from 'react-native';
+import {Image, StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import {useTheme} from '../context/ThemeContext';
@@ -18,18 +18,25 @@ function AuthCard({title, subtitle, children}: AuthCardProps) {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        heroBlock: {marginBottom: spacing.sm + 4},
-        eyebrow: {
+        heroBlock: {marginBottom: spacing.lg},
+        logo: {
+          width: 52,
+          height: 52,
+          borderRadius: 12,
+          marginBottom: spacing.xs,
+        },
+        brandName: {
           ...typography.eyebrow,
           color: colors.primaryDark,
+          letterSpacing: 1.5,
           marginBottom: spacing.sm,
         },
         heroTitle: {
           fontSize: 30,
-          fontWeight: '700',
+          fontWeight: '800',
           color: colors.text,
           maxWidth: 300,
-          marginBottom: spacing.sm,
+          lineHeight: 36,
         },
         cardWrapper: {
           width: '100%',
@@ -68,8 +75,13 @@ function AuthCard({title, subtitle, children}: AuthCardProps) {
   return (
     <>
       <View style={styles.heroBlock}>
-        <Text style={styles.eyebrow}>TruthOverlies</Text>
-        <Text style={styles.heroTitle}>Connect, Encourage and Grow</Text>
+        <Image
+          source={require('../assets/tol.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.brandName}>TRUTHOVERLIES</Text>
+        <Text style={styles.heroTitle}>Begin Your Journey</Text>
       </View>
 
       <View style={[styles.cardWrapper, !isLiquidGlassSupported && styles.cardFallback]}>

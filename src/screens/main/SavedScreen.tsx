@@ -6,16 +6,17 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-
-const SEG_PAD = 4;
-const SEG_GAP = 4;
+import Svg, {Circle, Line, Path} from 'react-native-svg';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
-import Svg, {Path} from 'react-native-svg';
+
+const SEG_PAD = 4;
+const SEG_GAP = 4;
 
 import ScreenShell from '../../components/ScreenShell';
 import SkeletonBlock from '../../components/SkeletonBlock';
@@ -34,6 +35,18 @@ import {ShareCardPayload, sharePayloadFromDevotion, sharePayloadFromScripture} f
 type Tab = 'devotions' | 'scriptures';
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
+
+function SearchIcon({size = 18, color = '#8E8E93'}: {size?: number; color?: string}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle cx="10.5" cy="10.5" r="6.5" stroke={color} strokeWidth="2" />
+      <Line
+        x1="15.5" y1="15.5" x2="21" y2="21"
+        stroke={color} strokeWidth="2" strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
 
 function BookmarkIcon({size = 18, color = '#4A2F24', filled = false}) {
   return (
@@ -54,7 +67,7 @@ function TrashIcon({size = 16, color = '#B85B5B'}) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path
-        d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"
+        d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M12 11v6M14 11v6"
         stroke={color}
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -255,6 +268,19 @@ function SavedScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('devotions');
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
   const [sharePayload, setSharePayload] = useState<ShareCardPayload | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter devotions based on search query
+  const filteredDevotions = useMemo(() => {
+    if (!searchQuery.trim()) return savedCards;
+    const query = searchQuery.toLowerCase();
+    return savedCards.filter(
+      card =>
+        card.title.toLowerCase().includes(query) ||
+        card.encouragement.toLowerCase().includes(query) ||
+        card.reference.toLowerCase().includes(query)
+    );
+  }, [savedCards, searchQuery]);
 
   const openShare = useCallback((payload: ShareCardPayload) => {
     if (payload.kind === 'scripture' && !payload.verse.trim()) {
@@ -286,17 +312,33 @@ function SavedScreen() {
         mass: 0.8,
       }).start();
       setActiveTab(tab);
+      setSearchQuery(''); // Clear search when switching tabs
     },
     [slideAnim, pillWidth],
   );
 
-  const filteredScriptures = useMemo(
-    () =>
-      activeCategoryId == null
-        ? scriptures
-        : scriptures.filter(s => s.categoryId === activeCategoryId),
-    [scriptures, activeCategoryId],
-  );
+  const filteredScriptures = useMemo(() => {
+    let result = scriptures;
+
+    // Filter by category
+    if (activeCategoryId != null) {
+      result = result.filter(s => s.categoryId === activeCategoryId);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        s =>
+          s.reference.toLowerCase().includes(query) ||
+          (s.verseText?.toLowerCase().includes(query) ?? false) ||
+          (s.moment?.toLowerCase().includes(query) ?? false) ||
+          (s.categoryName?.toLowerCase().includes(query) ?? false)
+      );
+    }
+
+    return result;
+  }, [scriptures, activeCategoryId, searchQuery]);
 
   const handleDelete = useCallback(
     (s: SavedScripture) => {
@@ -353,6 +395,25 @@ function SavedScreen() {
           ...typography.subhead,
           color: colors.muted,
           marginTop: spacing.xs,
+        },
+        // ── Search input ────────────────────────────────────────
+        searchContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
+          borderRadius: radius.lg,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+          marginBottom: spacing.md,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          gap: spacing.sm,
+        },
+        searchInput: {
+          flex: 1,
+          ...typography.body,
+          color: colors.text,
+          padding: 0,
         },
         // ── Segmented control ───────────────────────────────────
         segmentWrapper: {
@@ -451,56 +512,57 @@ function SavedScreen() {
         // ── Devotion cards ──────────────────────────────────────
         cardWrapper: {
           borderRadius: radius.xl,
-          marginBottom: spacing.sm,
+          marginBottom: spacing.md,
           overflow: 'hidden',
-          ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surfaceStrong,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }),
-        },
-        cardGlass: {
-          ...StyleSheet.absoluteFill,
-          borderRadius: radius.xl,
+          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          shadowColor: colors.shadow,
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          shadowOffset: {width: 0, height: 2},
+          elevation: 2,
         },
         cardContent: {
+          padding: spacing.lg,
+        },
+        cardHeader: {
           flexDirection: 'row',
-          padding: spacing.md,
-          gap: spacing.sm,
-        },
-        cardActions: {
-          alignItems: 'center',
           justifyContent: 'space-between',
-          paddingVertical: spacing.xs,
+          alignItems: 'flex-start',
+          marginBottom: spacing.sm,
         },
-        accentBar: {
-          width: 3,
-          borderRadius: 2,
-          backgroundColor: colors.primary,
-          alignSelf: 'stretch',
-        },
-        cardBody: {flex: 1},
         cardTitle: {
           ...typography.headline,
           fontWeight: '700',
           color: colors.text,
-          marginBottom: spacing.xs,
+          flex: 1,
+          marginRight: spacing.sm,
         },
         cardExcerpt: {
-          ...typography.footnote,
+          ...typography.body,
           color: colors.muted,
-          marginBottom: spacing.sm,
-          lineHeight: 18,
+          lineHeight: 22,
+          marginBottom: spacing.md,
         },
-        referenceRow: {
+        cardFooter: {
           flexDirection: 'row',
           alignItems: 'center',
-          gap: spacing.xs,
+          justifyContent: 'space-between',
+        },
+        referencePill: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 6,
+          borderRadius: radius.full,
+          backgroundColor: isDark ? colors.primaryDark + '20' : colors.backgroundAccent,
+          gap: 6,
         },
         referenceDot: {
-          width: 4,
-          height: 4,
-          borderRadius: 2,
+          width: 5,
+          height: 5,
+          borderRadius: 2.5,
           backgroundColor: colors.primaryDark,
         },
         referenceText: {
@@ -508,8 +570,11 @@ function SavedScreen() {
           fontWeight: '700',
           color: colors.primaryDark,
         },
+        shareBtn: {
+          padding: spacing.xs,
+        },
       }),
-    [colors],
+    [colors, isDark],
   );
 
   return (
@@ -535,6 +600,19 @@ function SavedScreen() {
             ? 'Devotions and reflections you want to return to.'
             : 'Verses saved directly from the Bible.'}
         </Text>
+      </View>
+
+      {/* Search input */}
+      <View style={styles.searchContainer}>
+        <SearchIcon size={18} color={colors.placeholder} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={activeTab === 'devotions' ? 'Search devotions...' : 'Search scriptures...'}
+          placeholderTextColor={colors.placeholder}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+        />
       </View>
 
       {/* Segmented control */}
@@ -614,9 +692,13 @@ function SavedScreen() {
                 <View style={styles.emptyIcon}>
                   <BookmarkIcon size={36} color={colors.primaryDark} />
                 </View>
-                <Text style={styles.emptyTitle}>No scriptures saved</Text>
+                <Text style={styles.emptyTitle}>
+                  {searchQuery.trim() ? 'No results found' : 'No scriptures saved'}
+                </Text>
                 <Text style={styles.emptyText}>
-                  Tap the bookmark icon on any verse in the Bible reader to save it here.
+                  {searchQuery.trim()
+                    ? 'Try a different search term.'
+                    : 'Tap the bookmark icon on any verse in the Bible reader to save it here.'}
                 </Text>
               </View>
             </View>
@@ -644,49 +726,48 @@ function SavedScreen() {
                 <SkeletonBlock key={i} height={120} borderRadius={radius.xl} style={{marginBottom: spacing.sm}} />
               ))}
             </>
-          ) : savedCards.length === 0 ? (
+          ) : filteredDevotions.length === 0 ? (
             <View style={styles.emptyWrapper}>
               {isLiquidGlassSupported && (
                 <LiquidGlassView style={styles.emptyGlass} effect="regular" colorScheme={glassScheme} />
               )}
               <View style={styles.emptyContent}>
-                <Text style={styles.emptyTitle}>Nothing saved yet</Text>
+                <Text style={styles.emptyTitle}>
+                  {searchQuery.trim() ? 'No results found' : 'Nothing saved yet'}
+                </Text>
                 <Text style={styles.emptyText}>
-                  Tap + on any card in the Home tab to save a devotion here.
+                  {searchQuery.trim()
+                    ? 'Try a different search term.'
+                    : 'Tap + on any card in the Home tab to save a devotion here.'}
                 </Text>
               </View>
             </View>
           ) : (
-            savedCards.map(card => (
-              <View key={card.id} style={styles.cardWrapper}>
-                {isLiquidGlassSupported && (
-                  <LiquidGlassView style={styles.cardGlass} effect="regular" colorScheme={glassScheme} />
-                )}
+            filteredDevotions.map(card => (
+              <Pressable
+                key={card.id}
+                accessibilityRole="button"
+                onPress={() => navigation.navigate('SavedDetail', {card})}
+                style={({pressed}) => [styles.cardWrapper, pressed && {opacity: 0.9}]}>
                 <View style={styles.cardContent}>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={() => navigation.navigate('SavedDetail', {card})}
-                    style={({pressed}) => [{flex: 1, flexDirection: 'row', gap: spacing.sm}, pressed && {opacity: 0.75}]}>
-                    <View style={styles.accentBar} />
-                    <View style={styles.cardBody}>
-                      <Text style={styles.cardTitle}>{card.title}</Text>
-                      <Text style={styles.cardExcerpt} numberOfLines={2}>
-                        {card.encouragement}
-                      </Text>
-                      <View style={styles.referenceRow}>
-                        <View style={styles.referenceDot} />
-                        <VerseLink reference={card.reference} style={styles.referenceText} />
-                      </View>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardTitle}>{card.title}</Text>
+                    <View style={styles.shareBtn}>
+                      <ShareIconButton
+                        onPress={() => openShare(sharePayloadFromDevotion(card))}
+                        color={colors.primaryDark}
+                      />
                     </View>
-                  </Pressable>
-                  <View style={styles.cardActions}>
-                    <ShareIconButton
-                      onPress={() => openShare(sharePayloadFromDevotion(card))}
-                      color={colors.primaryDark}
-                    />
+                  </View>
+                  <Text style={styles.cardExcerpt}>{card.encouragement}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.referencePill}>
+                      <View style={styles.referenceDot} />
+                      <VerseLink reference={card.reference} style={styles.referenceText} />
+                    </View>
                   </View>
                 </View>
-              </View>
+              </Pressable>
             ))
           )}
         </>

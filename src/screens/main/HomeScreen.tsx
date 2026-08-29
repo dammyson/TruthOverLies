@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useRef} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {Animated, Easing, Pressable, StyleSheet, Text, View} from 'react-native';
+import {Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import HeroAnimation from '../../components/HeroAnimation';
@@ -8,17 +8,17 @@ import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
 import SkeletonBlock from '../../components/SkeletonBlock';
-import {feelingOptions} from '../../data/devotions';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import useTransitionAction from '../../hooks/useTransitionAction';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+import {FeelingOption} from '../../types/app';
 import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
 
-const HERO_HEIGHT = 280;
+const HERO_HEIGHT = 180;
 
 function HomeScreen({navigation}: Props) {
   const {
@@ -27,6 +27,7 @@ function HomeScreen({navigation}: Props) {
     authMessageTone,
     clearAuthMessage,
     selectedFeelings,
+    feelingsCatalog,
     isCatalogLoading,
     toggleFeeling,
     generateDevotions,
@@ -142,15 +143,13 @@ function HomeScreen({navigation}: Props) {
         feelingsWrap: {
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: spacing.sm,
-          marginBottom: spacing.sm,
+          gap: 6,
         },
         chip: {
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm + 2,
-          borderRadius: radius.xl,
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: radius.lg,
           overflow: 'hidden',
-          minHeight: 44,
           justifyContent: 'center',
           alignItems: 'center',
         },
@@ -164,21 +163,27 @@ function HomeScreen({navigation}: Props) {
         },
         chipGlass: {
           ...StyleSheet.absoluteFill,
-          borderRadius: radius.xl,
+          borderRadius: radius.lg,
         },
         chipText: {
-          ...typography.subhead,
+          ...typography.footnote,
           fontWeight: '600',
           color: colors.text,
         },
         chipTextActive: {
           color: colors.white,
         },
+        chipsScroll: {
+          maxHeight: 230,
+          marginBottom: spacing.sm,
+        },
+        chipsScrollContent: {
+          paddingBottom: 4,
+        },
         skeletonRow: {
           flexDirection: 'row',
           flexWrap: 'wrap',
-          gap: spacing.sm,
-          marginBottom: spacing.sm,
+          gap: 6,
         },
       }),
     [colors],
@@ -254,46 +259,53 @@ function HomeScreen({navigation}: Props) {
             </View>
           </View>
 
-          {isCatalogLoading ? (
-            <View style={styles.skeletonRow}>
-              {[72, 88, 64, 80, 68, 92, 60, 76].map((w, i) => (
-                <SkeletonBlock key={i} height={44} width={w} borderRadius={radius.xl} />
-              ))}
-            </View>
-          ) : (
-            <View style={styles.feelingsWrap}>
-              {feelingOptions.map(feeling => {
-                const active = selectedFeelings.includes(feeling);
-                return (
-                  <Pressable
-                    accessibilityRole="button"
-                    key={feeling}
-                    onPress={() => {
-                      clearAuthMessage();
-                      toggleFeeling(feeling);
-                    }}
-                    style={({pressed}) => [
-                      styles.chip,
-                      active
-                        ? styles.chipActive
-                        : !isLiquidGlassSupported && styles.chipInactiveFallback,
-                      pressed && {opacity: 0.65},
-                    ]}>
-                    {!active && isLiquidGlassSupported && (
-                      <LiquidGlassView
-                        style={styles.chipGlass}
-                        effect="clear"
-                        colorScheme={glassScheme}
-                      />
-                    )}
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                      {feeling}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
+          <ScrollView
+            style={styles.chipsScroll}
+            contentContainerStyle={styles.chipsScrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            {isCatalogLoading ? (
+              <View style={styles.skeletonRow}>
+                {[60, 72, 50, 66, 54, 78, 48, 62, 56, 70, 44, 58].map((w, i) => (
+                  <SkeletonBlock key={i} height={30} width={w} borderRadius={radius.lg} />
+                ))}
+              </View>
+            ) : (
+              <View style={styles.feelingsWrap}>
+                {feelingsCatalog.map(item => {
+                  const feeling = item.name as FeelingOption;
+                  const active = selectedFeelings.includes(feeling);
+                  return (
+                    <Pressable
+                      accessibilityRole="button"
+                      key={feeling}
+                      onPress={() => {
+                        clearAuthMessage();
+                        toggleFeeling(feeling);
+                      }}
+                      style={({pressed}) => [
+                        styles.chip,
+                        active
+                          ? styles.chipActive
+                          : !isLiquidGlassSupported && styles.chipInactiveFallback,
+                        pressed && {opacity: 0.65},
+                      ]}>
+                      {!active && isLiquidGlassSupported && (
+                        <LiquidGlassView
+                          style={styles.chipGlass}
+                          effect="clear"
+                          colorScheme={glassScheme}
+                        />
+                      )}
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                        {feeling}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
+          </ScrollView>
 
           <PrimaryButton
             label="Continue"

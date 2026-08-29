@@ -34,6 +34,7 @@ import {
   SHARE_CARD_WIDTH,
 } from './shareDesignTypes';
 import {useTheme} from '../../context/ThemeContext';
+import CloseButton from '../CloseButton';
 import {ShareCardPayload} from '../../types/share';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
@@ -119,17 +120,20 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
     }
   }, [visible, reset]);
 
-  useEffect(() => {
-    if (!visible || !payload) return;
+  // Initialize state only after the modal finishes animating in (onShow),
+  // so setState calls don't conflict with the slide animation and cause height glitches.
+  const handleShow = useCallback(() => {
+    if (!payload) return;
     const defaults = defaultShareSelection(payload);
     setBackgroundId(defaults.backgroundId);
     setArrangementId(defaults.arrangementId);
     setColorPaletteId(defaultColorPaletteForPayload(payload));
     setCaptureKey(k => k + 1);
-  }, [visible, payload]);
+  }, [payload]);
 
+  // captureKey is 0 until onShow fires, so this never runs during the open animation.
   useEffect(() => {
-    if (!visible || !payload) return;
+    if (captureKey === 0 || !payload) return;
 
     let cancelled = false;
     setIsCapturing(true);
@@ -161,7 +165,7 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [visible, payload, backgroundId, colorPaletteId, arrangementId, customPhotoUri, captureKey, onClose]);
+  }, [captureKey, payload, backgroundId, colorPaletteId, arrangementId, customPhotoUri, onClose]);
 
   const bumpCapture = () => setCaptureKey(k => k + 1);
 
@@ -226,27 +230,13 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
   const shareReady = Boolean(previewUri) && !isCapturing;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-
-        <View style={[styles.sheet, {backgroundColor: colors.background}]}>
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onShow={handleShow} onRequestClose={onClose} onDismiss={onClose}>
+      <View style={[styles.sheet, {backgroundColor: colors.background}]}>
           <View style={styles.header}>
             <View style={[styles.handle, {backgroundColor: colors.border}]} />
             <View style={styles.titleRow}>
               <Text style={[styles.title, {color: colors.text}]}>Share this word</Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Close"
-                onPress={onClose}
-                hitSlop={12}
-                style={({pressed}) => [
-                  styles.closeBtn,
-                  {backgroundColor: colors.surface, borderColor: colors.border},
-                  pressed && {opacity: 0.7},
-                ]}>
-                <Text style={[styles.closeIcon, {color: colors.muted}]}>✕</Text>
-              </Pressable>
+              <CloseButton onPress={onClose} hitSlop={12} />
             </View>
             <Text style={[styles.subtitle, {color: colors.muted}]}>
               Customize your card, then share it anywhere.
@@ -331,7 +321,6 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
               )}
             </LinearGradient>
           </Pressable>
-        </View>
 
         {payload ? (
           <View style={styles.offscreen} pointerEvents="none">
@@ -355,24 +344,15 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    justifyContent: 'flex-end',
-  },
   sheet: {
-    borderTopLeftRadius: radius.xxl,
-    borderTopRightRadius: radius.xxl,
-    maxHeight: SCREEN.height * 0.92,
-    overflow: 'hidden',
-    position: 'relative',
+    flex: 1,
   },
   header: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm,
   },
   scroll: {
-    flexShrink: 1,
+    flex: 1,
   },
   sheetContent: {
     paddingHorizontal: spacing.lg,
@@ -392,19 +372,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeIcon: {
-    fontSize: 16,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
   title: {
     ...typography.title2,
     fontWeight: '700',
@@ -418,7 +385,8 @@ const styles = StyleSheet.create({
     ...typography.caption1,
     fontWeight: '700',
     marginBottom: spacing.sm,
-    letterSpacing: 0.3,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   previewFrame: {
     alignItems: 'center',

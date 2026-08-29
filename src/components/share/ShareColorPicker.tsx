@@ -7,8 +7,8 @@ import {colorPalettesForPayload, ShareColorPaletteOption} from './shareColorCata
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 
-const SWATCH_W = 56;
-const SWATCH_H = 56;
+const SWATCH_W = 64;
+const SWATCH_H = 64;
 
 type Props = {
   selectedId: string;
@@ -96,10 +96,10 @@ function ShareColorPicker({selectedId, onSelect, payload, colors}: Props) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xl,
   },
   heading: {
-    ...typography.subhead,
+    ...typography.headline,
     fontWeight: '700',
     marginBottom: spacing.xs,
   },

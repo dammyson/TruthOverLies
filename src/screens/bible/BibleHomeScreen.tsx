@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, {Circle, Line, Path} from 'react-native-svg';
+import Svg, {Circle, Line} from 'react-native-svg';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
@@ -18,7 +18,6 @@ import {MenuView} from '@react-native-menu/menu';
 import {useTheme} from '../../context/ThemeContext';
 import {useBibleNav} from '../../context/BibleNavContext';
 import {useTabNav} from '../../context/TabNavContext';
-import {useScriptures} from '../../context/ScriptureContext';
 import SaveVerseSheet from '../../components/SaveVerseSheet';
 
 function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
@@ -56,7 +55,6 @@ function BibleHomeScreen() {
   const {colors, isDark} = useTheme();
   const {pending, clearPending} = useBibleNav();
   const {jumpTo} = useTabNav();
-  const {isVerseSaved} = useScriptures();
   const insets = useSafeAreaInsets();
 
   const [bookId, setBookId] = useState('GEN');
@@ -76,7 +74,8 @@ function BibleHomeScreen() {
   const [searchVisible, setSearchVisible] = useState(false);
 
   const [highlightVerse, setHighlightVerse] = useState<number | null>(null);
-  const [saveSheetVerse, setSaveSheetVerse] = useState<number | null>(null);
+  const [selectedVerses, setSelectedVerses] = useState<Set<number>>(new Set());
+  const [saveSheetVisible, setSaveSheetVisible] = useState(false);
 
   const scrollRef = useRef<ScrollView>(null);
   const initialized = useRef(false);
@@ -107,11 +106,28 @@ function BibleHomeScreen() {
     }, [pending, clearPending]),
   );
 
+  const toggleVerseSelection = useCallback((verseNum: number) => {
+    setSelectedVerses(prev => {
+      const next = new Set(prev);
+      if (next.has(verseNum)) {
+        next.delete(verseNum);
+      } else {
+        next.add(verseNum);
+      }
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedVerses(new Set());
+  }, []);
+
   const loadChapter = useCallback(
     async (t: string, bId: string, ch: number) => {
       setLoading(true);
       setError(false);
       setHighlightVerse(null);
+      setSelectedVerses(new Set());
       verseYOffsets.current.clear();
       highlightScrolled.current = false;
       try {
@@ -177,6 +193,20 @@ function BibleHomeScreen() {
     if (chapter < chapterCount) setChapter(ch => ch + 1);
   }, [chapter, chapterCount]);
 
+  // Compute selected verse range and combined text
+  const selectedVerseData = useMemo(() => {
+    if (selectedVerses.size === 0) return null;
+    const sortedVerseNums = Array.from(selectedVerses).sort((a, b) => a - b);
+    const verseStart = sortedVerseNums[0];
+    const verseEnd = sortedVerseNums[sortedVerseNums.length - 1];
+    const selectedVersesList = verses.filter(v => selectedVerses.has(v.verse));
+    selectedVersesList.sort((a, b) => a.verse - b.verse);
+    const combinedText = selectedVersesList
+      .map(v => `[${v.verse}] ${v.text}`)
+      .join(' ');
+    return {verseStart, verseEnd, combinedText};
+  }, [selectedVerses, verses]);
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -234,6 +264,9 @@ function BibleHomeScreen() {
         },
         verseHighlight: {
           backgroundColor: colors.primaryDark + '18',
+        },
+        verseSelected: {
+          backgroundColor: colors.primaryDark + '25',
         },
         verseNum: {
           fontSize: 11,
@@ -315,14 +348,56 @@ function BibleHomeScreen() {
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
         },
-        bookmarkBtn: {
-          paddingLeft: 8,
-          paddingVertical: 4,
-          alignSelf: 'flex-start',
-          marginTop: 4,
+        selectionBar: {
+          position: 'absolute',
+          left: spacing.lg,
+          right: spacing.lg,
+          bottom: TAB_BAR_HEIGHT + insets.bottom + 70,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.sm,
+          borderRadius: radius.xl,
+          backgroundColor: isDark ? '#3A2E20' : colors.primaryDark,
+          shadowColor: '#000',
+          shadowOpacity: 0.25,
+          shadowRadius: 8,
+          shadowOffset: {width: 0, height: 4},
+          elevation: 6,
+        },
+        selectionText: {
+          ...typography.footnote,
+          fontWeight: '600',
+          color: isDark ? colors.text : '#FFFDF5',
+        },
+        selectionActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.sm,
+        },
+        clearBtn: {
+          paddingHorizontal: spacing.sm,
+          paddingVertical: 6,
+        },
+        clearBtnText: {
+          ...typography.footnote,
+          fontWeight: '600',
+          color: isDark ? colors.muted : 'rgba(255,255,255,0.7)',
+        },
+        saveBtn: {
+          paddingHorizontal: spacing.md,
+          paddingVertical: 8,
+          borderRadius: radius.lg,
+          backgroundColor: isDark ? colors.primaryDark + '30' : 'rgba(255,255,255,0.2)',
+        },
+        saveBtnText: {
+          ...typography.footnote,
+          fontWeight: '700',
+          color: isDark ? colors.primaryDark : '#FFFDF5',
         },
       }),
-    [colors, insets],
+    [colors, insets, isDark],
   );
 
   return (
@@ -454,35 +529,23 @@ function BibleHomeScreen() {
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}>
               {verses.map(v => {
-                const saved = isVerseSaved(bookId, chapter, v.verse);
+                const isSelected = selectedVerses.has(v.verse);
                 return (
-                  <View
+                  <Pressable
                     key={`${bookId}-${chapter}-${v.verse}`}
-                    style={[
+                    onPress={() => toggleVerseSelection(v.verse)}
+                    style={({pressed}) => [
                       styles.verseBlock,
                       v.verse === highlightVerse && styles.verseHighlight,
+                      isSelected && styles.verseSelected,
+                      pressed && {opacity: 0.7},
                     ]}
                     onLayout={e => {
                       verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
                     }}>
                     <Text style={styles.verseNum}>{v.verse}</Text>
                     <Text style={styles.verseText}>{v.text}</Text>
-                    <Pressable
-                      hitSlop={8}
-                      onPress={() => setSaveSheetVerse(v.verse)}
-                      style={({pressed}) => [styles.bookmarkBtn, pressed && {opacity: 0.5}]}>
-                      <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-                        <Path
-                          d="M5 3h14a1 1 0 0 1 1 1v17l-8-4-8 4V4a1 1 0 0 1 1-1z"
-                          stroke={saved ? colors.primaryDark : colors.muted}
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill={saved ? colors.primaryDark + '30' : 'none'}
-                        />
-                      </Svg>
-                    </Pressable>
-                  </View>
+                  </Pressable>
                 );
               })}
             </ScrollView>
@@ -503,6 +566,27 @@ function BibleHomeScreen() {
             <Text style={styles.navBtnText}>›</Text>
           </Pressable>
         </View>
+
+        {/* Floating selection bar */}
+        {selectedVerses.size > 0 && (
+          <View style={styles.selectionBar}>
+            <Text style={styles.selectionText}>
+              {selectedVerses.size} verse{selectedVerses.size > 1 ? 's' : ''} selected
+            </Text>
+            <View style={styles.selectionActions}>
+              <Pressable
+                onPress={clearSelection}
+                style={({pressed}) => [styles.clearBtn, pressed && {opacity: 0.7}]}>
+                <Text style={styles.clearBtnText}>Clear</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setSaveSheetVisible(true)}
+                style={({pressed}) => [styles.saveBtn, pressed && {opacity: 0.7}]}>
+                <Text style={styles.saveBtnText}>Save Scripture</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
       </View>
 
       <BookChapterPickerModal
@@ -533,21 +617,20 @@ function BibleHomeScreen() {
         onClose={() => setSearchVisible(false)}
       />
 
-      {saveSheetVerse != null && (() => {
-        const v = verses.find(x => x.verse === saveSheetVerse);
-        return v ? (
-          <SaveVerseSheet
-            visible
-            bookId={bookId}
-            bookName={bookName}
-            chapter={chapter}
-            verseNumber={v.verse}
-            verseText={v.text}
-            translation={translation}
-            onClose={() => setSaveSheetVerse(null)}
-          />
-        ) : null;
-      })()}
+      {saveSheetVisible && selectedVerseData && (
+        <SaveVerseSheet
+          visible
+          bookId={bookId}
+          bookName={bookName}
+          chapter={chapter}
+          verseStart={selectedVerseData.verseStart}
+          verseEnd={selectedVerseData.verseEnd > selectedVerseData.verseStart ? selectedVerseData.verseEnd : undefined}
+          verseText={selectedVerseData.combinedText}
+          translation={translation}
+          onClose={() => setSaveSheetVisible(false)}
+          onSaved={clearSelection}
+        />
+      )}
     </>
   );
 }

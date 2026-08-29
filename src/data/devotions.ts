@@ -145,7 +145,9 @@ const devotionLibrary: Record<FeelingOption, VerseEntry[]> = {
 };
 
 export function buildDevotions(feelings: FeelingOption[]): DevotionCard[] {
-  const limitedFeelings = feelings.slice(0, 4);
+  const known = feelings.filter(f => !!devotionLibrary[f]);
+  const source = known.length > 0 ? known : (['Hopeful'] as FeelingOption[]);
+  const limitedFeelings = source.slice(0, 4);
   const count = limitedFeelings.length <= 1 ? 1 : 2;
 
   return limitedFeelings.slice(0, count).map((feeling, index) => {

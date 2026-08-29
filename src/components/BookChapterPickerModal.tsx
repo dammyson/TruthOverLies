@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import {useTheme} from '../context/ThemeContext';
+import CloseButton from './CloseButton';
 import * as bibleRepo from '../bible/bibleRepo';
 import {BibleBook} from '../api/bible';
 import {typography} from '../theme/typography';
@@ -177,25 +178,21 @@ function BookChapterPickerModal({
     () =>
       StyleSheet.create({
         sheet: {flex: 1, backgroundColor: colors.background},
+        grabber: {
+          width: 36,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: colors.border,
+          alignSelf: 'center',
+          marginTop: spacing.sm,
+          marginBottom: spacing.sm,
+        },
         header: {
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: spacing.md,
           paddingTop: spacing.sm,
           paddingBottom: spacing.md,
-        },
-        headerBtn: {
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: colors.surfaceStrong,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        headerBtnText: {
-          ...typography.headline,
-          color: colors.text,
-          lineHeight: 20,
         },
         headerTitle: {
           flex: 1,
@@ -240,17 +237,12 @@ function BookChapterPickerModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}>
       <View style={styles.sheet}>
+        <View style={styles.grabber} />
         {/* Header */}
         <View style={styles.header}>
-          <Pressable
-            onPress={onClose}
-            style={({pressed}) => [styles.headerBtn, pressed && {opacity: 0.7}]}
-            hitSlop={8}>
-            <Text style={styles.headerBtnText}>✕</Text>
-          </Pressable>
-          <Text style={styles.headerTitle}>Books</Text>
-          {/* Spacer to balance the X button */}
           <View style={{width: 36}} />
+          <Text style={styles.headerTitle}>Books</Text>
+          <CloseButton onPress={onClose} />
         </View>
 
         {loading ? (

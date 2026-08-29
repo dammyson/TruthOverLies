@@ -7,14 +7,43 @@ import {
   Text,
   View,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Path} from 'react-native-svg';
 import {useTheme} from '../../context/ThemeContext';
 import {useJournals} from '../../context/JournalContext';
+import CloseButton from '../../components/CloseButton';
 import {Journal} from '../../types/app';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import SkeletonBlock from '../../components/SkeletonBlock';
+import dayjs from 'dayjs';
+
+function ChevronRight({color}: {color: string}) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 18l6-6-6-6"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function AlertIcon({color}: {color: string}) {
+  return (
+    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+        stroke={color}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 function PlusIcon({color = '#FFFDF5'}: {color?: string}) {
   return (
@@ -28,127 +57,110 @@ function JournalCard({
   entry,
   onPress,
   isDark,
+  colors,
 }: {
   entry: Journal;
   onPress: () => void;
   isDark: boolean;
+  colors: any;
 }) {
-  const date = useMemo(
-    () =>
-      new Date(entry.createdAt).toLocaleDateString(undefined, {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-      }),
-    [entry.createdAt],
-  );
-
-  const preview = entry.entryText.length > 140
-    ? entry.entryText.slice(0, 140).trimEnd() + '…'
-    : entry.entryText;
+  const date = useMemo(() => dayjs(entry.createdAt).format('D MMM YYYY'), [entry.createdAt]);
+  const preview =
+    entry.entryText.length > 140
+      ? entry.entryText.slice(0, 140).trimEnd() + '…'
+      : entry.entryText;
 
   const accentColor = isDark ? '#7A4A2A' : '#8B5E3C';
+  const errorBg = isDark ? '#2D1A16' : '#FFF2F0';
+  const errorBorder = isDark ? '#4A2A2A' : '#FFDAD6';
+  const errorText = isDark ? '#E89080' : '#7A3B3B';
+  const errorIcon = isDark ? '#E89080' : '#BA1A1A';
 
   return (
     <Pressable
       onPress={onPress}
-      style={({pressed}) => [{
+      style={({pressed}) => ({
         borderRadius: radius.xl,
-        marginBottom: spacing.sm,
-        backgroundColor: isDark ? '#1E1A14' : '#FDFAF4',
+        marginBottom: spacing.sm + 2,
+        backgroundColor: isDark ? '#1E1A14' : '#FFFFFF',
         borderWidth: StyleSheet.hairlineWidth,
-        borderColor: isDark ? '#3A3020' : '#E8DFD0',
+        borderColor: isDark ? '#3A3020' : '#D4C3BF',
         overflow: 'hidden' as const,
         opacity: pressed ? 0.75 : 1,
-        // left accent border via shadow trick — use borderLeftWidth instead
-        borderLeftWidth: 3,
-        borderLeftColor: accentColor,
-      }]}>
+        shadowColor: '#000',
+        shadowOpacity: isDark ? 0 : 0.04,
+        shadowRadius: 8,
+        shadowOffset: {width: 0, height: 2},
+        elevation: 1,
+      })}>
+      {/* Left accent stripe */}
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 6,
+          backgroundColor: accentColor,
+          borderTopLeftRadius: radius.xl,
+          borderBottomLeftRadius: radius.xl,
+        }}
+      />
 
-      {/* Date + chevron row */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 14,
-        paddingTop: 12,
-        paddingBottom: 6,
-      }}>
-        <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
-          <View style={{
-            width: 6,
-            height: 6,
-            borderRadius: 3,
-            backgroundColor: accentColor,
-          }} />
-          <Text style={{
-            ...typography.caption1,
-            fontWeight: '600',
-            color: isDark ? '#9E8E7E' : '#8B7B6A',
-            letterSpacing: 0.3,
-          }}>
-            {date}
-          </Text>
-        </View>
-        <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M9 18l6-6-6-6"
-            stroke={isDark ? '#6E5E4E' : '#B0A090'}
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-      </View>
-
-      {/* Entry preview */}
-      <Text style={{
-        ...typography.body,
-        color: isDark ? '#D8D4C8' : '#2E2C29',
-        lineHeight: 23,
-        paddingHorizontal: 14,
-        paddingBottom: entry.struggle ? 10 : 14,
-      }}>
-        {preview}
-      </Text>
-
-      {/* Struggle pill */}
-      {entry.struggle ? (
-        <View style={{
-          marginHorizontal: 14,
-          marginBottom: 12,
-          backgroundColor: isDark ? '#2A1A1A' : '#FFF2F0',
-          borderRadius: radius.lg,
-          paddingHorizontal: 10,
-          paddingVertical: 7,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: isDark ? '#4A2020' : '#F0CABA',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          gap: 7,
-        }}>
-          <View style={{
-            width: 14,
-            height: 14,
-            borderRadius: 7,
-            backgroundColor: '#B85B5B',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: 1,
-          }}>
-            <Text style={{fontSize: 8, fontWeight: '900', color: '#FFF'}}>!</Text>
+      <View style={{paddingLeft: 18, paddingRight: 14, paddingTop: 12, paddingBottom: 12}}>
+        {/* Date row */}
+        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8}}>
+          <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+            <View style={{width: 6, height: 6, borderRadius: 3, backgroundColor: accentColor}} />
+            <Text style={{...typography.caption1, fontWeight: '500', color: colors.muted}}>
+              {date}
+            </Text>
           </View>
-          <Text style={{
-            flex: 1,
-            ...typography.footnote,
-            color: isDark ? '#C8A8A0' : '#7A4040',
-            fontStyle: 'italic',
-            lineHeight: 18,
-          }}>
-            {entry.struggle}
-          </Text>
+          <ChevronRight color={colors.muted} />
         </View>
-      ) : null}
+
+        {/* Entry preview */}
+        <Text
+          numberOfLines={3}
+          style={{
+            ...typography.body,
+            color: isDark ? '#D8D4C8' : '#1B1C16',
+            lineHeight: 23,
+            marginBottom: entry.struggle ? 10 : 0,
+          }}>
+          {preview}
+        </Text>
+
+        {/* Struggle section */}
+        {entry.struggle ? (
+          <View
+            style={{
+              backgroundColor: errorBg,
+              borderRadius: radius.lg,
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+              borderWidth: StyleSheet.hairlineWidth,
+              borderColor: errorBorder,
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 8,
+            }}>
+            <View style={{marginTop: 1}}>
+              <AlertIcon color={errorIcon} />
+            </View>
+            <Text
+              numberOfLines={1}
+              style={{
+                flex: 1,
+                ...typography.footnote,
+                color: errorText,
+                fontStyle: 'italic',
+              }}>
+              {entry.struggle}
+            </Text>
+          </View>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
@@ -169,41 +181,47 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
     () =>
       StyleSheet.create({
         sheet: {flex: 1, backgroundColor: colors.background},
+        grabber: {
+          width: 36,
+          height: 4,
+          borderRadius: 2,
+          backgroundColor: colors.border,
+          alignSelf: 'center',
+          marginTop: spacing.sm,
+          marginBottom: spacing.sm,
+        },
         header: {
-          paddingTop: spacing.md,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           paddingHorizontal: spacing.lg,
-          paddingBottom: spacing.lg,
+          paddingVertical: spacing.md,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.background,
           borderTopLeftRadius: 30,
           borderTopRightRadius: 30,
-          marginTop: 10,
-          height: 130,
         },
-        titleRow: {
+        headerLeft: {
           flexDirection: 'row',
           alignItems: 'center',
           gap: spacing.sm,
         },
         title: {
-          ...typography.largeTitle,
-          fontWeight: '800',
-          color: '#FFFDF5',
+          ...typography.headline,
+          fontWeight: '700',
+          color: colors.text,
         },
         countBadge: {
           paddingHorizontal: 8,
-          paddingVertical: 3,
+          paddingVertical: 2,
           borderRadius: radius.full,
-          backgroundColor: 'rgba(255,255,255,0.18)',
-          alignSelf: 'center',
+          backgroundColor: isDark ? '#3E2010' : '#361f1a1a',
         },
         countText: {
           ...typography.caption1,
           fontWeight: '700',
-          color: 'rgba(255,253,245,0.85)',
-        },
-        subtitle: {
-          ...typography.footnote,
-          color: 'rgba(255,255,255,0.45)',
-          marginTop: 4,
+          color: colors.primaryDark,
         },
         list: {
           flexGrow: 1,
@@ -217,6 +235,7 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
           justifyContent: 'center',
           paddingHorizontal: spacing.lg,
           gap: spacing.md,
+          paddingTop: 60,
         },
         emptyTitle: {
           ...typography.headline,
@@ -229,20 +248,6 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
           color: colors.muted,
           textAlign: 'center',
           lineHeight: 22,
-        },
-        emptyBtn: {
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 6,
-          paddingHorizontal: spacing.xl,
-          paddingVertical: 13,
-          borderRadius: radius.xl,
-          overflow: 'hidden' as const,
-        },
-        emptyBtnText: {
-          ...typography.subhead,
-          fontWeight: '700',
-          color: '#FFFDF5',
         },
         addBar: {
           paddingHorizontal: spacing.lg,
@@ -257,11 +262,10 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
           alignItems: 'center',
           justifyContent: 'center',
           gap: 6,
-          height: 50,
+          height: 52,
           borderRadius: radius.xl,
-          overflow: 'hidden' as const,
+          backgroundColor: colors.primaryDark,
         },
-        addBtnGradient: {position: 'absolute', top: 0, left: 0, right: 0, bottom: 0},
         addBtnText: {
           ...typography.headline,
           fontWeight: '700',
@@ -269,7 +273,7 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
           letterSpacing: 0.3,
         },
       }),
-    [colors],
+    [colors, isDark],
   );
 
   return (
@@ -280,12 +284,10 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
       onRequestClose={onClose}
       onDismiss={onDismiss}>
       <View style={styles.sheet}>
-        <LinearGradient
-          colors={isDark ? ['#3E2010', '#2D160A', '#1A0E06'] : ['#5C3020', '#3E1E10', '#2D160E']}
-          start={{x: 0, y: 0}}
-          end={{x: 1, y: 1}}
-          style={styles.header}>
-          <View style={styles.titleRow}>
+        <View style={styles.grabber} />
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
             <Text style={styles.title}>My Journal</Text>
             {journals.length > 0 && (
               <View style={styles.countBadge}>
@@ -293,8 +295,8 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
               </View>
             )}
           </View>
-          <Text style={styles.subtitle}>Your private space with God</Text>
-        </LinearGradient>
+          <CloseButton onPress={onClose} />
+        </View>
 
         <ScrollView
           style={{flex: 1}}
@@ -306,7 +308,7 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
                 key={i}
                 height={110}
                 borderRadius={radius.xl}
-                style={{marginBottom: spacing.sm}}
+                style={{marginBottom: spacing.sm + 2}}
               />
             ))
           ) : journals.length === 0 ? (
@@ -324,6 +326,7 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
                 entry={j}
                 onPress={() => onEditEntry(j)}
                 isDark={isDark}
+                colors={colors}
               />
             ))
           )}
@@ -333,12 +336,6 @@ function JournalListModal({visible, onClose, onDismiss, onNewEntry, onEditEntry}
           <Pressable
             style={({pressed}) => [styles.addBtn, pressed && {opacity: 0.85}]}
             onPress={onNewEntry}>
-            <LinearGradient
-              colors={isDark ? ['#6B4E1A', '#4A3410', '#2D1E08'] : ['#8B5E3C', '#5C3020', '#3E1E10']}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 0}}
-              style={styles.addBtnGradient}
-            />
             <PlusIcon />
             <Text style={styles.addBtnText}>New Entry</Text>
           </Pressable>

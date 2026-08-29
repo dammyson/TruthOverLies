@@ -11,7 +11,7 @@ import Svg, {Path} from 'react-native-svg';
 
 const WINDOW = Dimensions.get('window');
 const FAB_SIZE = 52;
-const INITIAL_X = 20;
+const INITIAL_X = WINDOW.width - FAB_SIZE - 20;
 const INITIAL_Y = WINDOW.height - 155;
 
 function PenIcon() {
@@ -62,12 +62,16 @@ function FloatingJournalButton({onPress}: Props) {
 
         const rawX = currentPos.current.x + gs.dx;
         const rawY = currentPos.current.y + gs.dy;
-        const clampedX = Math.max(8, Math.min(WINDOW.width - FAB_SIZE - 8, rawX));
+
+        // Snap to nearest edge
+        const snapX = rawX + FAB_SIZE / 2 < WINDOW.width / 2
+          ? 20
+          : WINDOW.width - FAB_SIZE - 20;
         const clampedY = Math.max(80, Math.min(WINDOW.height - 150, rawY));
 
-        currentPos.current = {x: clampedX, y: clampedY};
+        currentPos.current = {x: snapX, y: clampedY};
         Animated.spring(position, {
-          toValue: {x: clampedX, y: clampedY},
+          toValue: {x: snapX, y: clampedY},
           useNativeDriver: false,
           damping: 15,
           stiffness: 200,

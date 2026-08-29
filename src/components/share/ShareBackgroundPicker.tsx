@@ -22,8 +22,8 @@ import {
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 
-const SWATCH_W = 72;
-const SWATCH_H = 56;
+const SWATCH_W = 80;
+const SWATCH_H = 80;
 
 const SWATCH_STARS = [
   [10, 8],
@@ -268,10 +268,10 @@ const previewStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.xl,
   },
   heading: {
-    ...typography.subhead,
+    ...typography.headline,
     fontWeight: '700',
     marginBottom: spacing.xs,
   },

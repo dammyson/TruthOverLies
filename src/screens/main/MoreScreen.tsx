@@ -92,27 +92,27 @@ const ROWS: SettingsRow[] = [
   {
     key: 'appearance',
     IconComponent: IconAppearance,
-    iconBg: '#6B5FA6',
+    iconBg: '#5C4033', // warm brown
     label: 'Appearance',
     description: 'Theme & display',
   },
   {
     key: 'about',
-    iconBg: '#4A7FC1',
+    iconBg: '#4A6B8A', // muted blue
     IconComponent: IconAbout,
     label: 'About',
     description: 'TruthOverLies v1.0',
   },
   {
     key: 'share',
-    iconBg: '#3D9A6A',
+    iconBg: '#4A7845', // forest green
     IconComponent: IconShare,
     label: 'Share',
     description: 'Invite a friend',
   },
   {
     key: 'privacy',
-    iconBg: '#B07040',
+    iconBg: '#8B5A2B', // warm amber
     IconComponent: IconPrivacy,
     label: 'Privacy',
     description: 'Terms & policy',
@@ -134,20 +134,34 @@ function MoreScreen() {
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        header: {marginBottom: spacing.md},
+        header: {marginBottom: spacing.lg},
+        eyebrow: {
+          ...typography.eyebrow,
+          color: colors.primaryDark,
+          marginBottom: spacing.xs,
+        },
         title: {
           ...typography.largeTitle,
           fontWeight: '700',
           color: colors.text,
         },
+        subtitle: {
+          ...typography.subhead,
+          color: colors.muted,
+          marginTop: spacing.xs,
+        },
         listWrapper: {
           borderRadius: radius.xxl,
-          marginBottom: spacing.md,
-          ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }),
+          marginBottom: spacing.lg,
+          overflow: 'hidden',
+          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          shadowColor: colors.shadow,
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          shadowOffset: {width: 0, height: 2},
+          elevation: 2,
         },
         listGlass: {
           ...StyleSheet.absoluteFill,
@@ -156,56 +170,55 @@ function MoreScreen() {
         row: {
           flexDirection: 'row',
           alignItems: 'center',
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm + 4,
-          minHeight: 62,
-          gap: spacing.sm + 4,
+          paddingHorizontal: spacing.lg,
+          paddingVertical: spacing.md,
+          minHeight: 68,
+          gap: spacing.md,
         },
         iconWrapper: {
-          width: 36,
-          height: 36,
-          borderRadius: 9,
+          width: 40,
+          height: 40,
+          borderRadius: 10,
           alignItems: 'center',
           justifyContent: 'center',
         },
         rowText: {flex: 1},
         rowLabel: {
-          ...typography.subhead,
+          ...typography.body,
           fontWeight: '600',
           color: colors.text,
         },
         rowDesc: {
-          ...typography.caption1,
+          ...typography.footnote,
           color: colors.muted,
-          marginTop: 1,
+          marginTop: 2,
         },
         chevron: {
-          fontSize: 18,
+          fontSize: 20,
           color: colors.muted,
-          lineHeight: 22,
+          lineHeight: 24,
         },
         divider: {
           height: StyleSheet.hairlineWidth,
           backgroundColor: colors.border,
-          marginLeft: spacing.md + 36 + spacing.sm + 4,
+          marginLeft: spacing.lg + 40 + spacing.md,
         },
         signOutWrapper: {
-          borderRadius: radius.xxl,
-          ...(!isLiquidGlassSupported && {
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }),
+          borderRadius: radius.xl,
+          overflow: 'hidden',
+          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
         },
         signOutGlass: {
           ...StyleSheet.absoluteFill,
-          borderRadius: radius.xxl,
+          borderRadius: radius.xl,
         },
         signOutRow: {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          minHeight: 54,
+          minHeight: 56,
         },
         signOutText: {
           ...typography.headline,
@@ -213,13 +226,16 @@ function MoreScreen() {
           color: colors.errorText,
         },
       }),
-    [colors],
+    [colors, isDark],
   );
 
   return (
     <ScreenShell>
+      {/* Header */}
       <View style={styles.header}>
+        <Text style={styles.eyebrow}>Settings</Text>
         <Text style={styles.title}>More</Text>
+        <Text style={styles.subtitle}>Customize your experience</Text>
       </View>
 
       {/* Settings list */}
@@ -232,7 +248,7 @@ function MoreScreen() {
             <Pressable
               accessibilityRole="button"
               onPress={() => onRowPress(item.key)}
-              style={({pressed}) => [styles.row, pressed && {opacity: 0.6}]}>
+              style={({pressed}) => [styles.row, pressed && {opacity: 0.7}]}>
               <View style={[styles.iconWrapper, {backgroundColor: item.iconBg}]}>
                 <item.IconComponent />
               </View>
@@ -251,7 +267,7 @@ function MoreScreen() {
       <Pressable
         accessibilityRole="button"
         onPress={logout}
-        style={({pressed}) => [styles.signOutWrapper, pressed && {opacity: 0.7}]}>
+        style={({pressed}) => [styles.signOutWrapper, pressed && {opacity: 0.8}]}>
         {isLiquidGlassSupported && (
           <LiquidGlassView style={styles.signOutGlass} effect="regular" colorScheme={glassScheme} />
         )}
