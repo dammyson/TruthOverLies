@@ -1,15 +1,18 @@
-import React, {useMemo, useState} from 'react';
-import {Dimensions, Image, ScrollView, StyleSheet, Text, View} from 'react-native';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
+import {Dimensions, Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
 
 import SkeletonBlock from '../../components/SkeletonBlock';
 import VerseLink from '../../components/VerseLink';
+import ShareCardSheet from '../../components/share/ShareCardSheet';
+import ShareIconButton from '../../components/share/ShareIconButton';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import {SavedStackParamList} from '../../navigation/SavedStackNavigator';
+import {sharePayloadFromDevotion} from '../../types/share';
 
 type Props = NativeStackScreenProps<SavedStackParamList, 'SavedDetail'>;
 
@@ -22,6 +25,19 @@ function SavedDetailScreen({route, navigation}: Props) {
   const {colors, isDark} = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
   const [imageReady, setImageReady] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <ShareIconButton
+          onPress={() => setShareOpen(true)}
+          color="#FFFDF5"
+          style={{marginRight: spacing.sm}}
+        />
+      ),
+    });
+  }, [navigation]);
 
   // Deterministic image per card — always the same image for the same reference
   const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(card.reference)}/800/600`;
@@ -103,11 +119,28 @@ function SavedDetailScreen({route, navigation}: Props) {
           fontWeight: '700',
           color: colors.primaryDark,
         },
+        shareButton: {
+          marginTop: spacing.lg,
+          borderRadius: radius.xl,
+          overflow: 'hidden',
+        },
+        shareGradient: {
+          minHeight: 52,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: spacing.lg,
+        },
+        shareButtonText: {
+          ...typography.headline,
+          fontWeight: '700',
+          color: '#FFFDF5',
+        },
       }),
-    [colors],
+    [colors, isDark],
   );
 
   return (
+    <>
     <ScrollView
       style={styles.scroll}
       contentInsetAdjustmentBehavior="automatic"
@@ -169,8 +202,29 @@ function SavedDetailScreen({route, navigation}: Props) {
             />
           </View>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Share this word"
+          onPress={() => setShareOpen(true)}
+          style={({pressed}) => [styles.shareButton, pressed && {opacity: 0.85}]}>
+          <LinearGradient
+            colors={[colors.primaryDark, colors.primary]}
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={styles.shareGradient}>
+            <Text style={styles.shareButtonText}>Share this word</Text>
+          </LinearGradient>
+        </Pressable>
       </View>
     </ScrollView>
+
+    <ShareCardSheet
+      visible={shareOpen}
+      payload={sharePayloadFromDevotion(card)}
+      onClose={() => setShareOpen(false)}
+    />
+  </>
   );
 }
 
