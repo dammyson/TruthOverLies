@@ -1,8 +1,11 @@
 import request from './client';
 
 export type BibleTranslation = {
-  code: string;
+  id: string;
   name: string;
+  language: string;
+  version: number;
+  sizeBytes: number;
 };
 
 export type BibleBook = {
@@ -55,7 +58,7 @@ export type BibleMeta = {
 };
 
 export function getTranslations() {
-  return request<BibleTranslation[]>('/bible/translations');
+  return request<BibleTranslation[]>('/v1/bibles');
 }
 
 export function getBooks(translation = 'KJV') {

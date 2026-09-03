@@ -58,8 +58,15 @@ export async function getTranslations(): Promise<bibleApi.BibleTranslation[]> {
     return cached;
   }
   const list = await bibleApi.getTranslations();
-  cacheSet(K.translations, list);
-  return list;
+  const normalized = list.map(item => ({
+    id: item.id,
+    name: item.name,
+    language: item.language ?? 'en',
+    version: item.version ?? 1,
+    sizeBytes: item.sizeBytes ?? 0,
+  }));
+  cacheSet(K.translations, normalized);
+  return normalized;
 }
 
 // ── Books ─────────────────────────────────────────────────────────────────────

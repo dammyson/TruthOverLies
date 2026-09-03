@@ -57,14 +57,7 @@ function TranslationPickerModal({visible, selectedTranslation, onSelect, onClose
         let list: bibleApi.BibleListItem[] = [];
 
         try {
-          const basic = await bibleRepo.getTranslations();
-          list = basic.map(t => ({
-            id: t.code,
-            name: t.name,
-            language: 'en',
-            version: 1,
-            sizeBytes: 0,
-          }));
+          list = await bibleRepo.getTranslations();
         } catch (err) {
           console.warn('[Bible] translation list fetch failed', err);
         }
