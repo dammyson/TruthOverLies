@@ -158,42 +158,46 @@ export async function downloadTranslation(
   const db = getDb();
 
   try {
-    for (let i = 0; i < books.length; i++) {
-      const book = books[i];
-      if (i > 0) {
-        await sleep(250); // stay under rate limit
-      }
+    const payload = await bibleApi.downloadTranslationPayload(translationId);
+    const bookEntries = Object.entries(payload.books ?? {});
 
-      const bookData = await downloadBookWithRetry(translationId, book.id);
-      if (bookData) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        db.transaction((tx: any) => {
-          for (const chStr of Object.keys(bookData)) {
-            const ch = Number(chStr);
-            for (const vStr of Object.keys(bookData[chStr])) {
-              tx.execute(
-                'INSERT OR REPLACE INTO verses (translation, book, chapter, verse, text) VALUES (?, ?, ?, ?, ?)',
-                [translationId, book.id, ch, Number(vStr), bookData[chStr][vStr]],
-              );
-            }
-          }
-        });
-      }
-      onProgress((i + 1) / books.length);
+    if (!bookEntries.length) {
+      throw new Error(`No books returned for translation ${translationId}`);
     }
 
-    // Mark translation as downloaded in SQLite
+    const totalBooks = bookEntries.length;
+    bookEntries.forEach(([bookId, bookData], index) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      db.transaction((tx: any) => {
+        for (const chStr of Object.keys(bookData)) {
+          const ch = Number(chStr);
+          for (const vStr of Object.keys(bookData[chStr])) {
+            tx.execute(
+              'INSERT OR REPLACE INTO verses (translation, book, chapter, verse, text) VALUES (?, ?, ?, ?, ?)',
+              [translationId, bookId, ch, Number(vStr), bookData[chStr][vStr]],
+            );
+          }
+        }
+      });
+
+      onProgress((index + 1) / totalBooks);
+    });
+
+    const version = Number(payload.version ?? 1);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     db.transaction((tx: any) => {
       tx.execute(
-        'INSERT OR REPLACE INTO translations (id, downloaded_at, version) VALUES (?, ?, 1)',
-        [translationId, new Date().toISOString()],
+        'INSERT OR REPLACE INTO translations (id, downloaded_at, version) VALUES (?, ?, ?)',
+        [translationId, new Date().toISOString(), version],
       );
     });
-    // Mirror into the in-memory set so modal re-opens reflect the state instantly
+
     getDownloadedSet().add(translationId);
+    onProgress(1);
+  } catch (err) {
+    console.warn('[Bible] translation download failed:', err);
+    throw err;
   } finally {
-    // Always clean up so the modal never gets stuck in "downloading" state
     _activeDownloads.delete(translationId);
   }
 }

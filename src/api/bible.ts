@@ -79,6 +79,10 @@ export function getTranslationMeta(translationId: string) {
   return request<BibleMeta>(`/v1/bibles/${encodeURIComponent(translationId)}/meta`);
 }
 
+export function downloadTranslationPayload(translationId: string) {
+  return request<BibleDownloadResponse>(`/v1/bibles/${encodeURIComponent(translationId)}/download`);
+}
+
 export function downloadBook(translationId: string, bookId: string) {
   return request<BibleDownloadBook>(`/v1/bibles/${encodeURIComponent(translationId)}/books/${encodeURIComponent(bookId)}`);
 }
