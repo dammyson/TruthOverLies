@@ -30,6 +30,8 @@ type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
 type FeelingTab = 'feelings' | 'struggles';
 
 const HERO_HEIGHT = 180;
+const SEG_PAD = 4;
+const SEG_GAP = 4;
 
 function HomeScreen({navigation}: Props) {
   const {
@@ -50,9 +52,11 @@ function HomeScreen({navigation}: Props) {
   const [activeTab, setActiveTab] = useState<FeelingTab>('feelings');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [segWidth, setSegWidth] = useState(0);
 
   const eyebrowAnim = useRef(new Animated.Value(0)).current;
   const titleAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
@@ -77,6 +81,13 @@ function HomeScreen({navigation}: Props) {
     hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const firstName = currentUser?.fullName.split(' ')[0] ?? 'Friend';
   const panelTitle = activeTab === 'feelings' ? 'How are you feeling?' : 'What are you struggling with?';
+  const pillWidth = segWidth > 0 ? (segWidth - SEG_PAD * 2 - SEG_GAP) / 2 : 0;
+
+  useEffect(() => {
+    if (pillWidth > 0) {
+      slideAnim.setValue(activeTab === 'feelings' ? 0 : pillWidth + SEG_GAP);
+    }
+  }, [pillWidth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = (tab: FeelingTab) => {
     if (tab !== activeTab) {
@@ -84,6 +95,13 @@ function HomeScreen({navigation}: Props) {
       clearSelectedFeelings();
       setSearchQuery('');
       setIsSearchVisible(false);
+      const toValue = tab === 'feelings' ? 0 : pillWidth + SEG_GAP;
+      Animated.spring(slideAnim, {
+        toValue,
+        useNativeDriver: true,
+        bounciness: 0,
+        speed: 20,
+      }).start();
       setActiveTab(tab);
     }
   };
@@ -181,30 +199,41 @@ function HomeScreen({navigation}: Props) {
           fontWeight: '600',
           color: colors.text,
         },
-        tabRow: {
-          flexDirection: 'row',
-          backgroundColor: colors.backgroundAccent,
-          borderRadius: radius.lg,
-          padding: 4,
+        segmentWrapper: {
+          borderRadius: radius.xl,
+          overflow: 'hidden',
           marginBottom: spacing.md,
-        },
-        tabButton: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingVertical: 10,
-          borderRadius: radius.md,
-        },
-        tabButtonActive: {
           backgroundColor: colors.surface,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
         },
-        tabText: {
+        segmentIndicator: {
+          position: 'absolute',
+          top: SEG_PAD,
+          bottom: SEG_PAD,
+          left: SEG_PAD,
+          borderRadius: radius.lg,
+          backgroundColor: colors.primaryDark,
+        },
+        segmentRow: {
+          flexDirection: 'row',
+          padding: SEG_PAD,
+          gap: SEG_GAP,
+        },
+        segmentBtn: {
+          flex: 1,
+          paddingVertical: 9,
+          alignItems: 'center',
+          borderRadius: radius.lg,
+        },
+        segmentText: {
           ...typography.footnote,
-          fontWeight: '700',
+          fontWeight: '600',
           color: colors.muted,
         },
-        tabTextActive: {
-          color: colors.text,
+        segmentTextActive: {
+          color: '#FFFDF5',
+          fontWeight: '700',
         },
         searchIconButton: {
           width: 30,
@@ -215,7 +244,7 @@ function HomeScreen({navigation}: Props) {
           backgroundColor: colors.backgroundAccent,
         },
         searchIconText: {
-          ...typography.caption1,
+          fontSize: 26,
           fontWeight: '700',
           color: colors.primaryDark,
         },
@@ -380,26 +409,30 @@ function HomeScreen({navigation}: Props) {
             </View>
           </View>
 
-          <View style={styles.tabRow}>
-            {(['feelings', 'struggles'] as FeelingTab[]).map(tab => {
-              const isActive = activeTab === tab;
-
-              return (
+          <View
+            style={styles.segmentWrapper}
+            onLayout={e => setSegWidth(e.nativeEvent.layout.width)}>
+            {pillWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.segmentIndicator,
+                  {width: pillWidth, transform: [{translateX: slideAnim}]},
+                ]}
+              />
+            )}
+            <View style={styles.segmentRow}>
+              {(['feelings', 'struggles'] as FeelingTab[]).map(tab => (
                 <Pressable
                   key={tab}
                   accessibilityRole="button"
-                  onPress={() => handleTabChange(tab)}
-                  style={({pressed}) => [
-                    styles.tabButton,
-                    isActive && styles.tabButtonActive,
-                    pressed && {opacity: 0.8},
-                  ]}>
-                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                  style={styles.segmentBtn}
+                  onPress={() => handleTabChange(tab)}>
+                  <Text style={[styles.segmentText, activeTab === tab && styles.segmentTextActive]}>
                     {tab === 'feelings' ? 'Feelings' : 'Struggles'}
                   </Text>
                 </Pressable>
-              );
-            })}
+              ))}
+            </View>
           </View>
 
           {isSearchVisible && (

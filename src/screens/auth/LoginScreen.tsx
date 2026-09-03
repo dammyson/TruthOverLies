@@ -52,6 +52,15 @@ function LoginScreen({ navigation }: Props) {
           fontWeight: '700',
           color: colors.primaryDark,
         },
+        forgotLink: {
+          fontSize: 13,
+          lineHeight: 20,
+          color: colors.primaryDark,
+          fontWeight: '600',
+          textAlign: 'right',
+          marginBottom: 12,
+          marginTop: -4,
+        },
         footerText: {
           fontSize: 13,
           lineHeight: 20,
@@ -91,6 +100,11 @@ function LoginScreen({ navigation }: Props) {
           secureTextEntry
           value={password}
         />
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => navigation.navigate('ForgotPassword')}>
+          <Text style={styles.forgotLink}>Forgot password?</Text>
+        </Pressable>
         <PrimaryButton
           label="Log In"
           loading={isLoggingIn}
