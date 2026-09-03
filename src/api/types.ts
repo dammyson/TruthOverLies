@@ -3,6 +3,7 @@
 export type ApiFeelingItem = {
   id: number;
   name: string;
+  kind: string | null;
   category: string;
   subcategory: string;
   created_at: string | null;
