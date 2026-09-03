@@ -519,49 +519,6 @@ function ProfileScreen() {
           </View>
         </View>
 
-        {/* Settings Section */}
-        <View style={styles.sectionWrapper}>
-          <Text style={styles.sectionTitle}>SETTINGS</Text>
-
-          {/* Membership Status */}
-          <View style={styles.settingRow}>
-            <View style={styles.settingIconWrapper}>
-              <CrownIcon size={18} color={colors.primaryDark} />
-            </View>
-            <View style={styles.settingText}>
-              <Text style={styles.settingLabel}>Membership Status</Text>
-              <Text style={styles.settingValue}>Active</Text>
-            </View>
-          </View>
-
-          <View style={styles.settingDivider} />
-
-          {/* Notifications */}
-          <Pressable style={({pressed}) => [styles.settingRow, pressed && {opacity: 0.7}]}>
-            <View style={styles.settingIconWrapper}>
-              <BellIcon size={18} color={colors.primaryDark} />
-            </View>
-            <View style={styles.settingText}>
-              <Text style={styles.settingLabel}>Notifications</Text>
-              <Text style={styles.settingValue}>Daily reminders</Text>
-            </View>
-            <ChevronRightIcon color={colors.muted} />
-          </Pressable>
-
-          <View style={styles.settingDivider} />
-
-          {/* Data & Privacy */}
-          <Pressable style={({pressed}) => [styles.settingRow, pressed && {opacity: 0.7}]}>
-            <View style={styles.settingIconWrapper}>
-              <ShieldIcon size={18} color={colors.primaryDark} />
-            </View>
-            <View style={styles.settingText}>
-              <Text style={styles.settingLabel}>Data & Privacy</Text>
-              <Text style={styles.settingValue}>Manage your data</Text>
-            </View>
-            <ChevronRightIcon color={colors.muted} />
-          </Pressable>
-        </View>
 
         {/* Journal Section */}
         <Pressable
@@ -602,6 +559,52 @@ function ProfileScreen() {
             <ChevronRightIcon color={colors.muted} />
           </View>
         </Pressable>
+
+        {/* Settings Section */}
+        <View style={styles.sectionWrapper}>
+          <Text style={styles.sectionTitle}>SETTINGS</Text>
+
+          
+
+          {/* Membership Status */}
+          <View style={styles.settingRow}>
+            <View style={styles.settingIconWrapper}>
+              <CrownIcon size={18} color={colors.primaryDark} />
+            </View>
+            <View style={styles.settingText}>
+              <Text style={styles.settingLabel}>Membership Status</Text>
+              <Text style={styles.settingValue}>Active</Text>
+            </View>
+          </View>
+
+          <View style={styles.settingDivider} />
+
+          {/* Notifications */}
+          <Pressable style={({pressed}) => [styles.settingRow, pressed && {opacity: 0.7}]}>
+            <View style={styles.settingIconWrapper}>
+              <BellIcon size={18} color={colors.primaryDark} />
+            </View>
+            <View style={styles.settingText}>
+              <Text style={styles.settingLabel}>Notifications</Text>
+              <Text style={styles.settingValue}>Daily reminders</Text>
+            </View>
+            <ChevronRightIcon color={colors.muted} />
+          </Pressable>
+
+          <View style={styles.settingDivider} />
+
+          {/* Data & Privacy */}
+          <Pressable style={({pressed}) => [styles.settingRow, pressed && {opacity: 0.7}]}>
+            <View style={styles.settingIconWrapper}>
+              <ShieldIcon size={18} color={colors.primaryDark} />
+            </View>
+            <View style={styles.settingText}>
+              <Text style={styles.settingLabel}>Data & Privacy</Text>
+              <Text style={styles.settingValue}>Manage your data</Text>
+            </View>
+            <ChevronRightIcon color={colors.muted} />
+          </Pressable>
+        </View>
       </ScrollView>
 
       <JournalListModal

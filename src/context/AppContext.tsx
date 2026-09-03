@@ -42,6 +42,7 @@ type AppContextValue = {
   logout: () => Promise<void>;
   clearAuthMessage: () => void;
   toggleFeeling: (feeling: FeelingOption) => void;
+  clearSelectedFeelings: () => void;
   generateDevotions: () => Promise<boolean>;
   toggleSavedCard: (card: DevotionCard) => Promise<void>;
   isSaved: (cardId: string) => boolean;
@@ -119,6 +120,7 @@ function AppProvider({children}: {children: ReactNode}) {
         const catalog: FeelingItem[] = catalogResult.value.map(f => ({
           id: f.id,
           name: f.name,
+          kind: f.kind,
           category: f.category,
           subcategory: f.subcategory,
         }));
@@ -157,6 +159,7 @@ function AppProvider({children}: {children: ReactNode}) {
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const clearAuthMessage = () => setAuthMessage('');
+  const clearSelectedFeelings = () => setSelectedFeelings([]);
 
   async function persistSession(token: string, user: AuthUser) {
     setAuthToken(token);
@@ -357,6 +360,7 @@ function AppProvider({children}: {children: ReactNode}) {
       logout,
       clearAuthMessage,
       toggleFeeling,
+      clearSelectedFeelings,
       generateDevotions,
       toggleSavedCard,
       isSaved,

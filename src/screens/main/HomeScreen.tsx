@@ -1,6 +1,15 @@
-import React, {useEffect, useMemo, useRef} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
-import {Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import HeroAnimation from '../../components/HeroAnimation';
@@ -18,6 +27,8 @@ import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
 
+type FeelingTab = 'feelings' | 'struggles';
+
 const HERO_HEIGHT = 180;
 
 function HomeScreen({navigation}: Props) {
@@ -26,6 +37,7 @@ function HomeScreen({navigation}: Props) {
     authMessage,
     authMessageTone,
     clearAuthMessage,
+    clearSelectedFeelings,
     selectedFeelings,
     feelingsCatalog,
     isCatalogLoading,
@@ -35,6 +47,9 @@ function HomeScreen({navigation}: Props) {
   const {colors, isDark} = useTheme();
   const {isTransitioning, runWithTransition} = useTransitionAction();
   const glassScheme = isDark ? 'dark' : 'light';
+  const [activeTab, setActiveTab] = useState<FeelingTab>('feelings');
+  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const eyebrowAnim = useRef(new Animated.Value(0)).current;
   const titleAnim = useRef(new Animated.Value(0)).current;
@@ -61,6 +76,39 @@ function HomeScreen({navigation}: Props) {
   const timeGreeting =
     hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
   const firstName = currentUser?.fullName.split(' ')[0] ?? 'Friend';
+  const panelTitle = activeTab === 'feelings' ? 'How are you feeling?' : 'What are you struggling with?';
+
+  const handleTabChange = (tab: FeelingTab) => {
+    if (tab !== activeTab) {
+      clearAuthMessage();
+      clearSelectedFeelings();
+      setSearchQuery('');
+      setIsSearchVisible(false);
+      setActiveTab(tab);
+    }
+  };
+
+  const filteredFeelings = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return feelingsCatalog.filter(item => {
+      const kind = (item.kind ?? item.category ?? '').toLowerCase();
+      const matchesQuery =
+        query.length === 0 ||
+        item.name.toLowerCase().includes(query) ||
+        item.category.toLowerCase().includes(query) ||
+        item.subcategory.toLowerCase().includes(query);
+
+      if (activeTab === 'feelings') {
+        return matchesQuery && (kind === 'feeling' || kind === 'feelings');
+      }
+
+      return (
+        matchesQuery &&
+        (kind === 'struggle' || kind === 'struggles' || kind.startsWith('strug'))
+      );
+    });
+  }, [activeTab, feelingsCatalog, searchQuery]);
 
   const styles = useMemo(
     () =>
@@ -123,10 +171,64 @@ function HomeScreen({navigation}: Props) {
           alignItems: 'center',
           marginBottom: spacing.md,
         },
+        headerActions: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.xs,
+        },
         panelTitle: {
           ...typography.headline,
           fontWeight: '600',
           color: colors.text,
+        },
+        tabRow: {
+          flexDirection: 'row',
+          backgroundColor: colors.backgroundAccent,
+          borderRadius: radius.lg,
+          padding: 4,
+          marginBottom: spacing.md,
+        },
+        tabButton: {
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingVertical: 10,
+          borderRadius: radius.md,
+        },
+        tabButtonActive: {
+          backgroundColor: colors.surface,
+        },
+        tabText: {
+          ...typography.footnote,
+          fontWeight: '700',
+          color: colors.muted,
+        },
+        tabTextActive: {
+          color: colors.text,
+        },
+        searchIconButton: {
+          width: 30,
+          height: 30,
+          borderRadius: 15,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: colors.backgroundAccent,
+        },
+        searchIconText: {
+          ...typography.caption1,
+          fontWeight: '700',
+          color: colors.primaryDark,
+        },
+        searchBox: {
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          borderRadius: radius.lg,
+          paddingHorizontal: spacing.md,
+          paddingVertical: 10,
+          color: colors.text,
+          marginBottom: spacing.sm,
+          ...typography.subhead,
         },
         counterBadge: {
           paddingHorizontal: 10,
@@ -179,6 +281,16 @@ function HomeScreen({navigation}: Props) {
         },
         chipsScrollContent: {
           paddingBottom: 4,
+        },
+        emptyState: {
+          paddingVertical: spacing.lg,
+          paddingHorizontal: spacing.sm,
+          alignItems: 'center',
+        },
+        emptyStateText: {
+          ...typography.body,
+          color: colors.muted,
+          textAlign: 'center',
         },
         skeletonRow: {
           flexDirection: 'row',
@@ -253,11 +365,52 @@ function HomeScreen({navigation}: Props) {
         )}
         <View style={styles.panelContent}>
           <View style={styles.panelHeader}>
-            <Text style={styles.panelTitle}>How are you feeling?</Text>
-            <View style={styles.counterBadge}>
-              <Text style={styles.counterText}>{selectedFeelings.length}/4</Text>
+            <Text style={styles.panelTitle}>{panelTitle}</Text>
+            <View style={styles.headerActions}>
+              <View style={styles.counterBadge}>
+                <Text style={styles.counterText}>{selectedFeelings.length}/4</Text>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={isSearchVisible ? 'Hide search' : 'Show search'}
+                onPress={() => setIsSearchVisible(current => !current)}
+                style={({pressed}) => [styles.searchIconButton, pressed && {opacity: 0.8}]}> 
+                <Text style={styles.searchIconText}>⌕</Text>
+              </Pressable>
             </View>
           </View>
+
+          <View style={styles.tabRow}>
+            {(['feelings', 'struggles'] as FeelingTab[]).map(tab => {
+              const isActive = activeTab === tab;
+
+              return (
+                <Pressable
+                  key={tab}
+                  accessibilityRole="button"
+                  onPress={() => handleTabChange(tab)}
+                  style={({pressed}) => [
+                    styles.tabButton,
+                    isActive && styles.tabButtonActive,
+                    pressed && {opacity: 0.8},
+                  ]}>
+                  <Text style={[styles.tabText, isActive && styles.tabTextActive]}>
+                    {tab === 'feelings' ? 'Feelings' : 'Struggles'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {isSearchVisible && (
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={`Search ${activeTab === 'feelings' ? 'feelings' : 'struggles'}...`}
+              placeholderTextColor={colors.placeholder}
+              style={styles.searchBox}
+            />
+          )}
 
           <ScrollView
             style={styles.chipsScroll}
@@ -272,7 +425,7 @@ function HomeScreen({navigation}: Props) {
               </View>
             ) : (
               <View style={styles.feelingsWrap}>
-                {feelingsCatalog.map(item => {
+                {filteredFeelings.map(item => {
                   const feeling = item.name as FeelingOption;
                   const active = selectedFeelings.includes(feeling);
                   return (
@@ -303,6 +456,14 @@ function HomeScreen({navigation}: Props) {
                     </Pressable>
                   );
                 })}
+
+                {filteredFeelings.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>
+                      No {activeTab} available yet.
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             )}
           </ScrollView>

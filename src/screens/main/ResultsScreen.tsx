@@ -1,5 +1,6 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {useFocusEffect} from '@react-navigation/native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
@@ -13,10 +14,18 @@ import {radius, spacing} from '../../theme/spacing';
 import {ShareCardPayload, sharePayloadFromDevotion} from '../../types/share';
 
 function ResultsScreen() {
-  const {devotionCards, selectedFeelings, toggleSavedCard, isSaved} = useAppContext();
+  const {devotionCards, selectedFeelings, toggleSavedCard, isSaved, clearSelectedFeelings} = useAppContext();
   const {colors, isDark} = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
   const [sharePayload, setSharePayload] = useState<ShareCardPayload | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        clearSelectedFeelings();
+      };
+    }, [clearSelectedFeelings]),
+  );
 
   const styles = useMemo(
     () =>

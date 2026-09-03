@@ -3,6 +3,7 @@ export type AuthMessageTone = 'error' | 'success';
 export type FeelingItem = {
   id: number;
   name: string;
+  kind: string | null;
   category: string;
   subcategory: string;
 };
