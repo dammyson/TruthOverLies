@@ -553,10 +553,20 @@ function BibleHomeScreen() {
               showsVerticalScrollIndicator={false}>
               {verses.map(v => {
                 const isSelected = selectedVerses.has(v.verse);
+                const hasSelection = selectedVerses.size > 0;
                 return (
                   <Pressable
                     key={`${bookId}-${chapter}-${v.verse}`}
-                    onPress={() => toggleVerseSelection(v.verse)}
+                    onPress={() => {
+                      if (hasSelection) {
+                        toggleVerseSelection(v.verse);
+                      }
+                    }}
+                    onLongPress={() => {
+                      if (!hasSelection) {
+                        toggleVerseSelection(v.verse);
+                      }
+                    }}
                     style={({pressed}) => [
                       styles.verseBlock,
                       v.verse === highlightVerse && styles.verseHighlight,
