@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as bibleApi from '../api/bible';
 import {ApiError} from '../api/types';
 import {getDb} from './db';
@@ -29,19 +30,23 @@ export function isDownloadInProgress(id: string): boolean {
 }
 
 // In-memory registry of downloaded translation IDs.
-// Seeded from SQLite on first access; updated immediately on every download.
-// Survives modal close/reopen within the same JS session.
+// Seeded from SQLite on first access and refreshed after each write so it survives
+// app restarts and stays in sync with the database.
 let _downloadedSet: Set<string> | null = null;
 
-function getDownloadedSet(): Set<string> {
-  if (_downloadedSet !== null) {
-    return _downloadedSet;
-  }
+function refreshDownloadedSet(): Set<string> {
   const db = getDb();
   const result = db.execute('SELECT id FROM translations');
   const rows: Array<{id: string}> = result.rows?._array ?? [];
   _downloadedSet = new Set(rows.map(r => r.id));
   return _downloadedSet;
+}
+
+function getDownloadedSet(): Set<string> {
+  if (_downloadedSet !== null) {
+    return _downloadedSet;
+  }
+  return refreshDownloadedSet();
 }
 
 const K = {
@@ -192,7 +197,7 @@ export async function downloadTranslation(
       );
     });
 
-    getDownloadedSet().add(translationId);
+    refreshDownloadedSet();
     onProgress(1);
   } catch (err) {
     console.warn('[Bible] translation download failed:', err);
@@ -211,6 +216,7 @@ export async function deleteTranslation(translationId: string): Promise<void> {
     tx.execute('DELETE FROM verses WHERE translation = ?', [translationId]);
     tx.execute('DELETE FROM translations WHERE id = ?', [translationId]);
   });
+  refreshDownloadedSet();
 }
 
 // ── Search (SQLite only — requires downloaded translation) ────────────────────
@@ -263,6 +269,46 @@ export function getSelectedTranslation(): string | null {
 
 export function setSelectedTranslation(id: string): void {
   cacheSet('selected_translation', id);
+}
+
+export type BibleLocation = {
+  bookId: string;
+  bookName: string;
+  chapter: number;
+  translation: string;
+};
+
+export function resolveBibleInitialLocation(
+  lastLocation: BibleLocation | null,
+  selectedTranslation: string | null,
+): BibleLocation {
+  return (
+    lastLocation ?? {
+      bookId: 'GEN',
+      bookName: 'Genesis',
+      chapter: 1,
+      translation: selectedTranslation ?? 'KJV',
+    }
+  );
+}
+
+export function getLastBibleLocation(): BibleLocation | null {
+  return cacheGet<BibleLocation>('last_bible_location');
+}
+
+export async function getSavedBibleLocation(): Promise<BibleLocation | null> {
+  try {
+    const raw = await AsyncStorage.getItem('last_bible_location');
+    return raw ? (JSON.parse(raw) as BibleLocation) : null;
+  } catch {
+    return getLastBibleLocation();
+  }
+}
+
+export function setLastBibleLocation(location: BibleLocation): void {
+  cacheSet('last_bible_location', location);
+  AsyncStorage.setItem('last_bible_location', JSON.stringify(location)).catch(() => {});
+  setSelectedTranslation(location.translation);
 }
 
 // ── Default bible download (KJV on first login) ───────────────────────────────

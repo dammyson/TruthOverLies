@@ -3,6 +3,7 @@ import {Platform, View} from 'react-native';
 import TabView, {SceneMap} from 'react-native-bottom-tabs';
 import {useBibleNav} from '../context/BibleNavContext';
 import {useTabNav} from '../context/TabNavContext';
+import * as bibleRepo from '../bible/bibleRepo';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import BibleHomeScreen from '../screens/bible/BibleHomeScreen';

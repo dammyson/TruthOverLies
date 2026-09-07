@@ -1,0 +1,34 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renderOsisRichText applies emphasis for hi tags and omits notes 1`] = `
+[
+  <Text
+    style={
+      {
+        "fontStyle": "italic",
+      }
+    }
+  >
+    The Lord
+  </Text>,
+  " ",
+  " is good.",
+]
+`;
+
+exports[`renderOsisRichText strips OSIS metadata and keeps readable verse text 1`] = `
+[
+  <Text>
+    Adam
+  </Text>,
+  ", ",
+  <Text>
+    Sheth
+  </Text>,
+  ", ",
+  <Text>
+    Enosh
+  </Text>,
+  ".",
+]
+`;

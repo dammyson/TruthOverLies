@@ -19,6 +19,7 @@ import {useTheme} from '../../context/ThemeContext';
 import {useBibleNav} from '../../context/BibleNavContext';
 import {useTabNav} from '../../context/TabNavContext';
 import SaveVerseSheet from '../../components/SaveVerseSheet';
+import {renderOsisRichText} from '../../bible/osisRichText';
 
 function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
   return (
@@ -57,13 +58,16 @@ function BibleHomeScreen() {
   const {jumpTo} = useTabNav();
   const insets = useSafeAreaInsets();
 
-  const [bookId, setBookId] = useState('GEN');
-  const [bookName, setBookName] = useState('Genesis');
-  const [chapter, setChapter] = useState(1);
-  const [chapterCount, setChapterCount] = useState(50);
-  const [translation, setTranslation] = useState(
-    bibleRepo.getSelectedTranslation() ?? 'KJV',
+  const savedLocation = bibleRepo.resolveBibleInitialLocation(
+    bibleRepo.getLastBibleLocation(),
+    bibleRepo.getSelectedTranslation(),
   );
+
+  const [bookId, setBookId] = useState(savedLocation.bookId);
+  const [bookName, setBookName] = useState(savedLocation.bookName);
+  const [chapter, setChapter] = useState(savedLocation.chapter);
+  const [chapterCount, setChapterCount] = useState(50);
+  const [translation, setTranslation] = useState(savedLocation.translation);
 
   const [verses, setVerses] = useState<BibleVerse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,8 +92,22 @@ function BibleHomeScreen() {
     useCallback(() => {
       if (initialized.current) return;
       initialized.current = true;
-      const saved = bibleRepo.getSelectedTranslation() ?? 'KJV';
-      setTranslation(saved);
+
+      const applyRestored = async () => {
+        const restored = await bibleRepo.getSavedBibleLocation();
+        const resolved = bibleRepo.resolveBibleInitialLocation(
+          restored ?? bibleRepo.getLastBibleLocation(),
+          bibleRepo.getSelectedTranslation(),
+        );
+
+        setBookId(resolved.bookId);
+        setBookName(resolved.bookName);
+        setChapter(resolved.chapter);
+        setTranslation(resolved.translation);
+        bibleRepo.setSelectedTranslation(resolved.translation);
+      };
+
+      applyRestored();
     }, []),
   );
 
@@ -150,6 +168,11 @@ function BibleHomeScreen() {
     },
     [],
   );
+
+  useEffect(() => {
+    bibleRepo.setLastBibleLocation({bookId, bookName, chapter, translation});
+    bibleRepo.setSelectedTranslation(translation);
+  }, [bookId, bookName, chapter, translation]);
 
   useEffect(() => {
     loadChapter(translation, bookId, chapter);
@@ -530,10 +553,20 @@ function BibleHomeScreen() {
               showsVerticalScrollIndicator={false}>
               {verses.map(v => {
                 const isSelected = selectedVerses.has(v.verse);
+                const hasSelection = selectedVerses.size > 0;
                 return (
                   <Pressable
                     key={`${bookId}-${chapter}-${v.verse}`}
-                    onPress={() => toggleVerseSelection(v.verse)}
+                    onPress={() => {
+                      if (hasSelection) {
+                        toggleVerseSelection(v.verse);
+                      }
+                    }}
+                    onLongPress={() => {
+                      if (!hasSelection) {
+                        toggleVerseSelection(v.verse);
+                      }
+                    }}
                     style={({pressed}) => [
                       styles.verseBlock,
                       v.verse === highlightVerse && styles.verseHighlight,
@@ -544,7 +577,9 @@ function BibleHomeScreen() {
                       verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
                     }}>
                     <Text style={styles.verseNum}>{v.verse}</Text>
-                    <Text style={styles.verseText}>{v.text}</Text>
+                    <Text style={styles.verseText}>
+                      {renderOsisRichText(v.text, styles.verseText)}
+                    </Text>
                   </Pressable>
                 );
               })}

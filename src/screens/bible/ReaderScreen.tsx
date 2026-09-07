@@ -24,6 +24,7 @@ import * as bibleRepo from '../../bible/bibleRepo';
 import {BibleVerse} from '../../api/bible';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
+import {renderOsisRichText} from '../../bible/osisRichText';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Reader'>;
 
@@ -51,11 +52,18 @@ function ReaderScreen({route, navigation}: Props) {
   const {colors} = useTheme();
 
   // Reading position — starts from route params, managed locally from then on
-  const [bookId, setBookId] = useState(route.params.bookId);
-  const [bookName, setBookName] = useState(route.params.bookName);
-  const [chapter, setChapter] = useState(route.params.chapter);
-  const [chapterCount, setChapterCount] = useState(route.params.chapterCount);
-  const [translation, setTranslation] = useState(route.params.translation);
+  const savedLocation = bibleRepo.resolveBibleInitialLocation(
+    bibleRepo.getLastBibleLocation(),
+    bibleRepo.getSelectedTranslation(),
+  );
+
+  const [bookId, setBookId] = useState(route.params?.bookId ?? savedLocation.bookId);
+  const [bookName, setBookName] = useState(route.params?.bookName ?? savedLocation.bookName);
+  const [chapter, setChapter] = useState(route.params?.chapter ?? savedLocation.chapter);
+  const [chapterCount, setChapterCount] = useState(route.params?.chapterCount ?? 50);
+  const [translation, setTranslation] = useState(
+    route.params?.translation ?? savedLocation.translation,
+  );
 
   const [verses, setVerses] = useState<BibleVerse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +95,11 @@ function ReaderScreen({route, navigation}: Props) {
     },
     [],
   );
+
+  useEffect(() => {
+    bibleRepo.setLastBibleLocation({bookId, bookName, chapter, translation});
+    bibleRepo.setSelectedTranslation(translation);
+  }, [bookId, bookName, chapter, translation]);
 
   useEffect(() => {
     loadChapter(translation, bookId, chapter);
@@ -255,13 +268,15 @@ function ReaderScreen({route, navigation}: Props) {
             showsVerticalScrollIndicator={false}>
             {/* Inline paragraph with superscript-style verse numbers */}
             <Text style={styles.paragraph}>
-              {verses.map(v => (
-                <Text key={`${bookId}-${chapter}-${v.verse}`}>
-                  <Text style={styles.verseNum}>{v.verse} </Text>
-                  {v.text}
-                  {'  '}
-                </Text>
-              ))}
+              {verses.map(v => {
+                return (
+                  <Text key={`${bookId}-${chapter}-${v.verse}`}>
+                    <Text style={styles.verseNum}>{v.verse} </Text>
+                    {renderOsisRichText(v.text, styles.verseText)}
+                    {'  '}
+                  </Text>
+                );
+              })}
             </Text>
           </ScrollView>
         )}
