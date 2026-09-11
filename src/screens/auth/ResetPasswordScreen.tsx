@@ -1,9 +1,10 @@
 import React, {useMemo, useRef, useState} from 'react';
-import {StyleSheet, Text} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import AuthCard from '../../components/AuthCard';
 import FormField from '../../components/FormField';
+import GlassBackButton from '../../components/GlassBackButton';
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
@@ -26,6 +27,9 @@ function ResetPasswordScreen({navigation, route}: Props) {
   const styles = useMemo(
     () =>
       StyleSheet.create({
+        backRow: {
+          marginBottom: 12,
+        },
         hint: {
           fontSize: 13,
           lineHeight: 18,
@@ -59,6 +63,9 @@ function ResetPasswordScreen({navigation, route}: Props) {
 
   return (
     <ScreenShell keyboardAware>
+      <View style={styles.backRow}>
+        <GlassBackButton onPress={() => navigation.goBack()} />
+      </View>
       <AuthCard
         title="New Password"
         subtitle="Choose a strong password for your account.">

@@ -6,9 +6,11 @@ import {
   TextInput,
   View,
 } from 'react-native';
+
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import AuthCard from '../../components/AuthCard';
+import GlassBackButton from '../../components/GlassBackButton';
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
@@ -156,12 +158,18 @@ function OTPVerifyScreen({navigation, route}: Props) {
           color: colors.primaryDark,
           fontWeight: '700',
         },
+        backRow: {
+          marginBottom: 12,
+        },
       }),
     [colors],
   );
 
   return (
     <ScreenShell keyboardAware>
+      <View style={styles.backRow}>
+        <GlassBackButton onPress={() => navigation.goBack()} />
+      </View>
       <AuthCard
         title="Enter Code"
         subtitle="Check your email for the 6-digit reset code.">
