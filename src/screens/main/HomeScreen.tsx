@@ -17,6 +17,11 @@ import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
 import SkeletonBlock from '../../components/SkeletonBlock';
+import ShareCardSheet from '../../components/share/ShareCardSheet';
+import ShareIconButton from '../../components/share/ShareIconButton';
+import {ShareCardPayload} from '../../types/share';
+import VerseLink from '../../components/VerseLink';
+import {getVerseOfTheDay} from '../../api/verseOfTheDay';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import useTransitionAction from '../../hooks/useTransitionAction';
@@ -53,6 +58,8 @@ function HomeScreen({navigation}: Props) {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [segWidth, setSegWidth] = useState(0);
+  const [sharePayload, setSharePayload] = useState<ShareCardPayload | null>(null);
+  const [verseOfTheDay, setVerseOfTheDay] = useState<{text: string; reference: string} | null>(null);
 
   const eyebrowAnim = useRef(new Animated.Value(0)).current;
   const titleAnim = useRef(new Animated.Value(0)).current;
@@ -82,6 +89,53 @@ function HomeScreen({navigation}: Props) {
   const firstName = currentUser?.fullName.split(' ')[0] ?? 'Friend';
   const panelTitle = activeTab === 'feelings' ? 'How are you feeling?' : 'What are you struggling with?';
   const pillWidth = segWidth > 0 ? (segWidth - SEG_PAD * 2 - SEG_GAP) / 2 : 0;
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadVerseOfTheDay = async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const data = await getVerseOfTheDay(today);
+        if (!mounted || !data?.length) return;
+        const verse = data[0];
+        setVerseOfTheDay({
+          text: verse.text,
+          reference: `${verse.book} ${verse.chapter}:${verse.verse}`,
+        });
+      } catch {
+        if (mounted) {
+          setVerseOfTheDay({
+            text: 'But they that wait upon the Lord shall renew their strength.',
+            reference: 'Isaiah 40:31',
+          });
+        }
+      }
+    };
+
+    loadVerseOfTheDay();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const featuredVerse = verseOfTheDay ?? {
+    text: 'But they that wait upon the Lord shall renew their strength.',
+    reference: 'Isaiah 40:31',
+  };
+
+  const handleShareFeaturedVerse = () => {
+    setSharePayload({
+      kind: 'scripture',
+      verse: featuredVerse.text,
+      reference: featuredVerse.reference,
+      translation: verseOfTheDay ? 'KJV' : 'KJV',
+      moment: 'Daily verse',
+      categoryName: 'Daily Verse',
+      accentColor: null,
+    });
+  };
 
   useEffect(() => {
     if (pillWidth > 0) {
@@ -142,6 +196,7 @@ function HomeScreen({navigation}: Props) {
         greetingTitle: {
           ...typography.largeTitle,
           fontWeight: '700',
+          fontSize: 20,
           color: colors.text,
         },
         heroCard: {
@@ -164,7 +219,36 @@ function HomeScreen({navigation}: Props) {
           ...typography.title3,
           fontWeight: '700',
           color: '#FFFDF5',
-          maxWidth: '78%',
+          maxWidth: '90%',
+          overflow: 'hidden',
+        },
+        heroVerseWrap: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: spacing.sm,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: 'rgba(255,255,255,0.18)',
+          maxWidth: '82%',
+          paddingTop: spacing.xs,
+        },
+        heroVerseText: {
+          ...typography.subhead,
+          color: '#FFFDF5',
+          fontStyle: 'italic',
+          lineHeight: 22,
+          marginBottom: spacing.xs,
+        },
+        heroReferenceText: {
+          ...typography.caption1,
+          fontWeight: '700',
+          color: '#F8E9D9',
+          textDecorationLine: 'underline',
+        },
+        heroShareButton: {
+          padding: 6,
+          borderRadius: 999,
+          backgroundColor: 'rgba(255,255,255,0.12)',
         },
         // ── Feeling panel ─────────────────────────────────────────
         panelWrapper: {
@@ -259,17 +343,6 @@ function HomeScreen({navigation}: Props) {
           marginBottom: spacing.sm,
           ...typography.subhead,
         },
-        counterBadge: {
-          paddingHorizontal: 10,
-          paddingVertical: 3,
-          borderRadius: 20,
-          backgroundColor: colors.backgroundAccent,
-        },
-        counterText: {
-          ...typography.caption1,
-          fontWeight: '700',
-          color: colors.primaryDark,
-        },
         // ── Feeling chips ─────────────────────────────────────────
         feelingsWrap: {
           flexDirection: 'row',
@@ -334,9 +407,8 @@ function HomeScreen({navigation}: Props) {
     <ScreenShell>
       {/* Greeting */}
       <View style={styles.greetingRow}>
-        <Text style={styles.greetingLabel}>Today's Encouragement</Text>
         <Text style={styles.greetingTitle}>
-          {timeGreeting}{currentUser ? `, ${firstName}` : ''}
+          {timeGreeting}{currentUser ? `, ${firstName}!` : ''}
         </Text>
       </View>
 
@@ -359,9 +431,11 @@ function HomeScreen({navigation}: Props) {
                 ],
               },
             ]}>
-            WORD FOR TODAY
+            VERSE OF THE DAY
           </Animated.Text>
           <Animated.Text
+            numberOfLines={3}
+            ellipsizeMode="tail"
             style={[
               styles.heroTitle,
               {
@@ -376,10 +450,25 @@ function HomeScreen({navigation}: Props) {
                 ],
               },
             ]}>
-            Tell me how you{"'"}re feeling and receive a word for this moment.
+            {featuredVerse.text}
           </Animated.Text>
+          <View style={styles.heroVerseWrap}>
+            <VerseLink reference={featuredVerse.reference} style={styles.heroReferenceText} />
+            <ShareIconButton
+              onPress={handleShareFeaturedVerse}
+              color="#F8E9D9"
+              size={16}
+              style={styles.heroShareButton}
+            />
+          </View>
         </View>
       </View>
+
+      <ShareCardSheet
+        visible={sharePayload != null}
+        payload={sharePayload}
+        onClose={() => setSharePayload(null)}
+      />
 
       <MessageBanner message={authMessage} tone={authMessageTone} />
 
@@ -396,9 +485,6 @@ function HomeScreen({navigation}: Props) {
           <View style={styles.panelHeader}>
             <Text style={styles.panelTitle}>{panelTitle}</Text>
             <View style={styles.headerActions}>
-              <View style={styles.counterBadge}>
-                <Text style={styles.counterText}>{selectedFeelings.length}/4</Text>
-              </View>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={isSearchVisible ? 'Hide search' : 'Show search'}

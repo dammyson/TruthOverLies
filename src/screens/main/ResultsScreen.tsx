@@ -72,15 +72,22 @@ function ResultsScreen() {
           ...StyleSheet.absoluteFill,
           borderRadius: radius.xl,
         },
-        cardContent: {padding: spacing.md},
+        cardContent: {
+          padding: spacing.md,
+          paddingBottom: spacing.lg + 12,
+        },
         cardTopRow: {
           flexDirection: 'row',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
           marginBottom: spacing.sm,
           gap: spacing.sm,
+          paddingRight: 82,
         },
         cardActions: {
+          position: 'absolute',
+          right: spacing.md,
+          bottom: spacing.md,
           flexDirection: 'row',
           alignItems: 'center',
           gap: spacing.xs,
@@ -109,7 +116,7 @@ function ResultsScreen() {
           backgroundColor: colors.surface,
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 2,
+          marginTop: 0,
         },
         saveButtonActive: {
           backgroundColor: colors.primary,
@@ -160,7 +167,7 @@ function ResultsScreen() {
     <ScreenShell>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Scripture for this moment</Text>
-        <Text style={styles.title}>Your Word for Today</Text>
+        <Text style={styles.title}>Bible Verse</Text>
         {selectedFeelings.length > 0 && (
           <View style={styles.feelingPills}>
             {selectedFeelings.map(f => (

@@ -21,6 +21,7 @@ function SignupScreen({ navigation }: Props) {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const { isTransitioning, runWithTransition } = useTransitionAction();
 
   const styles = useMemo(
@@ -77,11 +78,21 @@ function SignupScreen({ navigation }: Props) {
           secureTextEntry
           value={password}
         />
+        <FormField
+          label="Confirm Password"
+          onChangeText={value => {
+            clearAuthMessage();
+            setConfirmPassword(value);
+          }}
+          placeholder="Re-enter your password"
+          secureTextEntry
+          value={confirmPassword}
+        />
         <PrimaryButton
           label="Create Account"
           loading={isTransitioning}
           onPress={() => {
-            runWithTransition(() => signup(fullName, email, password));
+            runWithTransition(() => signup(fullName, email, password, confirmPassword));
           }}
         />
         <Pressable

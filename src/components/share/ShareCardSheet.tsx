@@ -235,7 +235,7 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
           <View style={styles.header}>
             <View style={[styles.handle, {backgroundColor: colors.border}]} />
             <View style={styles.titleRow}>
-              <Text style={[styles.title, {color: colors.text}]}>Share this word</Text>
+              <Text style={[styles.title, {color: colors.text}]}>Share this Bible verse</Text>
               <CloseButton onPress={onClose} hitSlop={12} />
             </View>
             <Text style={[styles.subtitle, {color: colors.muted}]}>
