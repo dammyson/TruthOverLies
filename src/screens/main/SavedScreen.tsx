@@ -603,7 +603,7 @@ function SavedScreen() {
       </View>
 
       {/* Search input */}
-      <View style={styles.searchContainer}>
+      {/* <View style={styles.searchContainer}>
         <SearchIcon size={18} color={colors.placeholder} />
         <TextInput
           style={styles.searchInput}
@@ -613,7 +613,7 @@ function SavedScreen() {
           onChangeText={setSearchQuery}
           returnKeyType="search"
         />
-      </View>
+      </View> */}
 
       {/* Segmented control */}
       <View
@@ -752,18 +752,18 @@ function SavedScreen() {
                 <View style={styles.cardContent}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.cardTitle}>{card.title}</Text>
-                    <View style={styles.shareBtn}>
-                      <ShareIconButton
-                        onPress={() => openShare(sharePayloadFromDevotion(card))}
-                        color={colors.primaryDark}
-                      />
-                    </View>
                   </View>
                   <Text style={styles.cardExcerpt}>{card.encouragement}</Text>
                   <View style={styles.cardFooter}>
                     <View style={styles.referencePill}>
                       <View style={styles.referenceDot} />
                       <VerseLink reference={card.reference} style={styles.referenceText} />
+                    </View>
+                     <View style={styles.shareBtn}>
+                      <ShareIconButton
+                        onPress={() => openShare(sharePayloadFromDevotion(card))}
+                        color={colors.primaryDark}
+                      />
                     </View>
                   </View>
                 </View>

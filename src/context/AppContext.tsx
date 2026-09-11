@@ -38,7 +38,7 @@ type AppContextValue = {
   savedCards: DevotionCard[];
   login: (email: string, password: string) => Promise<boolean>;
   loginAsGuest: () => Promise<void>;
-  signup: (fullName: string, email: string, password: string) => Promise<boolean>;
+  signup: (fullName: string, email: string, password: string, confirmPassword?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   clearAuthMessage: () => void;
   toggleFeeling: (feeling: FeelingOption) => void;
@@ -209,11 +209,21 @@ function AppProvider({children}: {children: ReactNode}) {
     }
   };
 
-  const signup = async (fullName: string, email: string, password: string): Promise<boolean> => {
+  const signup = async (
+    fullName: string,
+    email: string,
+    password: string,
+    confirmPassword?: string,
+  ): Promise<boolean> => {
     clearAuthMessage();
-    if (!fullName.trim() || !email.trim() || !password.trim()) {
+    if (!fullName.trim() || !email.trim() || !password.trim() || !confirmPassword?.trim()) {
       setAuthMessageTone('error');
       setAuthMessage('Complete all fields to create your account.');
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setAuthMessageTone('error');
+      setAuthMessage('Passwords do not match.');
       return false;
     }
     try {
@@ -252,12 +262,12 @@ function AppProvider({children}: {children: ReactNode}) {
       if (current.includes(feeling)) {
         return current.filter(f => f !== feeling);
       }
-      if (current.length >= 4) {
+      if (current.length >= 1) {
         setAuthMessageTone('error');
-        setAuthMessage('You can select up to 4 feelings.');
+        setAuthMessage('Choose only one feeling or struggle at a time.');
         return current;
       }
-      return [...current, feeling];
+      return [feeling];
     });
   };
 

@@ -70,6 +70,17 @@ export type ApiUserProfile = {
   created_at: string;
 };
 
+export type ApiVerseOfTheDayEntry = {
+  id: number;
+  text: string;
+  book: string;
+  chapter: number;
+  verse: number;
+  translation: string;
+  date: string;
+  created_at: string;
+};
+
 export class ApiError extends Error {
   status: number;
 
