@@ -21,9 +21,11 @@ async function ensureAndroidPhotoPermission(): Promise<boolean> {
 
 /** Opens the photo library and returns a local image URI for share backgrounds. */
 export async function pickShareCustomPhoto(): Promise<string | null> {
-  const permitted = await ensureAndroidPhotoPermission();
-  if (!permitted) {
-    return null;
+  if (Platform.OS === 'android') {
+    const permitted = await ensureAndroidPhotoPermission();
+    if (!permitted) {
+      return null;
+    }
   }
 
   const result = await launchImageLibrary({
@@ -32,7 +34,11 @@ export async function pickShareCustomPhoto(): Promise<string | null> {
     quality: 1,
   });
 
-  if (result.didCancel || result.errorCode) {
+  if (result.didCancel || result.errorCode === 'permission') {
+    return null;
+  }
+
+  if (result.errorCode) {
     return null;
   }
 

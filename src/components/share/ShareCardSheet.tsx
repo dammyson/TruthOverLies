@@ -177,7 +177,13 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
 
   const handlePickCustomPhoto = async () => {
     const uri = await pickShareCustomPhoto();
-    if (!uri) return;
+    if (!uri) {
+      Alert.alert(
+        'Photo access needed',
+        'Please allow access to your photos so you can use a custom image in your share card.',
+      );
+      return;
+    }
 
     try {
       await Image.prefetch(uri);
