@@ -1,6 +1,7 @@
 import React from 'react';
-import {Pressable, StyleSheet, Text} from 'react-native';
+import {Pressable, StyleSheet} from 'react-native';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
+import Svg, {Path} from 'react-native-svg';
 
 import {useTheme} from '../context/ThemeContext';
 
@@ -28,7 +29,15 @@ function GlassBackButton({onPress}: Props) {
           colorScheme={isDark ? 'dark' : 'light'}
         />
       )}
-      <Text style={[styles.arrow, {color: colors.primaryDark}]}>‹</Text>
+      <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+        <Path
+          d="M15 18l-6-6 6-6"
+          stroke={colors.primaryDark}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
     </Pressable>
   );
 }
@@ -41,11 +50,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-  },
-  arrow: {
-    fontSize: 26,
-    lineHeight: 32,
-    fontWeight: '300',
   },
 });
 

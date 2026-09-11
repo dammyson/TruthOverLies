@@ -30,6 +30,13 @@ export function forgotPassword(email: string) {
   });
 }
 
+export function verifyOtp(email: string, otp: string) {
+  return request<void>('/users/verify-otp', {
+    method: 'POST',
+    body: JSON.stringify({email, otp}),
+  });
+}
+
 export function resetPassword(email: string, otp: string, newPassword: string) {
   return request<void>('/users/reset-password', {
     method: 'POST',

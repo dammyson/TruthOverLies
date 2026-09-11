@@ -1,9 +1,10 @@
 import React, {useMemo, useState} from 'react';
-import {StyleSheet, Text, Pressable} from 'react-native';
+import {StyleSheet, Text, Pressable, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 
 import AuthCard from '../../components/AuthCard';
 import FormField from '../../components/FormField';
+import GlassBackButton from '../../components/GlassBackButton';
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
@@ -24,6 +25,9 @@ function ForgotPasswordScreen({navigation}: Props) {
   const styles = useMemo(
     () =>
       StyleSheet.create({
+        backRow: {
+          marginBottom: 12,
+        },
         backLink: {
           fontSize: 13,
           lineHeight: 20,
@@ -51,7 +55,7 @@ function ForgotPasswordScreen({navigation}: Props) {
         await authApi.forgotPassword(trimmed);
         setTone('success');
         setMessage('A reset code has been sent to your email.');
-        navigation.navigate('ResetPassword', {email: trimmed});
+        navigation.navigate('OTPVerify', {email: trimmed});
       } catch (err: any) {
         setTone('error');
         setMessage(err?.message ?? 'Something went wrong. Please try again.');
@@ -61,6 +65,9 @@ function ForgotPasswordScreen({navigation}: Props) {
 
   return (
     <ScreenShell keyboardAware>
+      <View style={styles.backRow}>
+        <GlassBackButton onPress={() => navigation.goBack()} />
+      </View>
       <AuthCard
         title="Forgot Password"
         subtitle="Enter your email and we'll send you a reset code.">
