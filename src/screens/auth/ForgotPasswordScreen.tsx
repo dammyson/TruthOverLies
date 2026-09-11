@@ -51,7 +51,7 @@ function ForgotPasswordScreen({navigation}: Props) {
         await authApi.forgotPassword(trimmed);
         setTone('success');
         setMessage('A reset code has been sent to your email.');
-        navigation.navigate('ResetPassword', {email: trimmed});
+        navigation.navigate('OTPVerify', {email: trimmed});
       } catch (err: any) {
         setTone('error');
         setMessage(err?.message ?? 'Something went wrong. Please try again.');
