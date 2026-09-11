@@ -22,6 +22,8 @@ import ShareIconButton from '../../components/share/ShareIconButton';
 import {ShareCardPayload} from '../../types/share';
 import VerseLink from '../../components/VerseLink';
 import {getVerseOfTheDay} from '../../api/verseOfTheDay';
+import storage from '../../cache/storage';
+import CACHE_KEYS from '../../cache/keys';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import useTransitionAction from '../../hooks/useTransitionAction';
@@ -90,25 +92,55 @@ function HomeScreen({navigation}: Props) {
   const panelTitle = activeTab === 'feelings' ? 'How are you feeling?' : 'What are you struggling with?';
   const pillWidth = segWidth > 0 ? (segWidth - SEG_PAD * 2 - SEG_GAP) / 2 : 0;
 
+  const getLocalDateKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     let mounted = true;
 
     const loadVerseOfTheDay = async () => {
       try {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getLocalDateKey();
+        const cachedDate = await storage.get<string>(CACHE_KEYS.VERSE_OF_THE_DAY_DATE);
+        const cachedVerse = await storage.get<{text: string; reference: string}>(CACHE_KEYS.VERSE_OF_THE_DAY);
+
+        if (cachedDate === today && cachedVerse && mounted) {
+          setVerseOfTheDay(cachedVerse);
+          return;
+        }
+
         const data = await getVerseOfTheDay(today);
         if (!mounted || !data?.length) return;
+
         const verse = data[0];
-        setVerseOfTheDay({
+        const nextVerse = {
           text: verse.text,
           reference: `${verse.book} ${verse.chapter}:${verse.verse}`,
-        });
+        };
+
+        setVerseOfTheDay(nextVerse);
+        await storage.set(CACHE_KEYS.VERSE_OF_THE_DAY_DATE, today);
+        await storage.set(CACHE_KEYS.VERSE_OF_THE_DAY, nextVerse);
       } catch {
         if (mounted) {
-          setVerseOfTheDay({
+          const fallbackVerse = {
             text: 'But they that wait upon the Lord shall renew their strength.',
             reference: 'Isaiah 40:31',
-          });
+          };
+          const cachedDate = await storage.get<string>(CACHE_KEYS.VERSE_OF_THE_DAY_DATE);
+          const cachedVerse = await storage.get<{text: string; reference: string}>(CACHE_KEYS.VERSE_OF_THE_DAY);
+
+          if (cachedDate && cachedVerse && mounted) {
+            setVerseOfTheDay(cachedVerse);
+            return;
+          }
+
+          setVerseOfTheDay(fallbackVerse);
         }
       }
     };
