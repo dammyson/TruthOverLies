@@ -29,11 +29,18 @@ async function request<T>(
     let message = `Request failed (${response.status})`;
     try {
       const body = await response.json();
-      if (body?.detail) {
+      const backendMessage =
+        body?.detail ??
+        body?.message ??
+        body?.error ??
+        body?.title ??
+        body?.error_description;
+
+      if (backendMessage) {
         message =
-          typeof body.detail === 'string'
-            ? body.detail
-            : JSON.stringify(body.detail);
+          typeof backendMessage === 'string'
+            ? backendMessage
+            : JSON.stringify(backendMessage);
       }
       console.warn(`[API] ❌ ${method} ${url} → ${response.status}`, body);
     } catch {

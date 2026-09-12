@@ -579,6 +579,7 @@ function HomeScreen({navigation}: Props) {
                 {filteredFeelings.map(item => {
                   const feeling = item.name as FeelingOption;
                   const active = selectedFeelings.includes(feeling);
+                  const debugLabel = `${feeling} (${item.id})`;
                   return (
                     <Pressable
                       accessibilityRole="button"
@@ -602,7 +603,7 @@ function HomeScreen({navigation}: Props) {
                         />
                       )}
                       <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                        {feeling}
+                        {debugLabel}
                       </Text>
                     </Pressable>
                   );
