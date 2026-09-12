@@ -10,7 +10,7 @@ import React, {
 import * as authApi from '../api/auth';
 import * as devotionsApi from '../api/devotions';
 import * as feelingsApi from '../api/feelings';
-import {feelingsFromIds, parseFeelingNames} from '../utils/feelings';
+import {feelingsFromIds, normalizeFeelingName, parseFeelingNames} from '../utils/feelings';
 import {ApiError} from '../api/types';
 import storage from '../cache/storage';
 import CACHE_KEYS from '../cache/keys';
@@ -288,16 +288,37 @@ function AppProvider({children}: {children: ReactNode}) {
     }
 
     try {
-      // Map feeling names → IDs from catalog; fall back to index if not found
+      if (feelingsCatalog.length === 0) {
+        setAuthMessageTone('error');
+        setAuthMessage('The feelings list is still loading. Please try again in a moment.');
+        return false;
+      }
+
+      const catalogIndex = new Map(
+        feelingsCatalog.map(item => [normalizeFeelingName(item.name), item.id]),
+      );
+
       const feelingIds = selectedFeelings
-        .map(name => feelingsCatalog.find(f => f.name.toLowerCase() === name.toLowerCase())?.id)
-        .filter((id): id is number => id !== undefined);
+        .map(name => catalogIndex.get(normalizeFeelingName(name)))
+        .filter((id): id is number => typeof id === 'number');
 
-      const idsToSend = feelingIds.length > 0
-        ? feelingIds
-        : selectedFeelings.map((_, i) => i + 1);
+      if (feelingIds.length !== selectedFeelings.length) {
+        const missing = selectedFeelings.filter(
+          name => !catalogIndex.has(normalizeFeelingName(name)),
+        );
 
-      const res = await devotionsApi.getRecommendations(idsToSend, authToken);
+        console.warn('[feelings] could not map selected feelings to catalog IDs', {
+          selectedFeelings,
+          missing,
+          catalog: feelingsCatalog.map(item => ({id: item.id, name: item.name})),
+        });
+
+        setAuthMessageTone('error');
+        setAuthMessage('We could not match your selected feeling to the latest catalog. Please try again.');
+        return false;
+      }
+
+      const res = await devotionsApi.getRecommendations(feelingIds, authToken);
       setLastCheckId(res.check_id);
 
       const cards: DevotionCard[] = res.cards.map(c => ({
@@ -313,17 +334,22 @@ function AppProvider({children}: {children: ReactNode}) {
 
       // Log each selected feeling (fire-and-forget)
       selectedFeelings.forEach(name => {
-        const item = feelingsCatalog.find(f => f.name.toLowerCase() === name.toLowerCase());
+        const item = feelingsCatalog.find(f => normalizeFeelingName(f.name) === normalizeFeelingName(name));
         if (item) {
           feelingsApi.logUserFeeling(item.id, authToken).catch(() => {});
         }
       });
 
       return true;
-    } catch {
-      // Network/server error — fall back to local devotions mapped to known keys
-      setDevotionCards(buildDevotions(parseFeelingNames(selectedFeelings)));
-      return true;
+    } catch (error) {
+      console.warn('[feelings] recommendation request failed', error);
+      setAuthMessageTone('error');
+      setAuthMessage(
+        error instanceof ApiError
+          ? error.message
+          : 'We could not fetch recommendations for that feeling. Please try again.',
+      );
+      return false;
     }
   };
 

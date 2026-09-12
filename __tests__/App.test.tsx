@@ -39,3 +39,26 @@ test('requires matching passwords before creating an account', async () => {
   expect(result).toBe(false);
   expect(authMessage).toBe('Passwords do not match.');
 });
+
+test('sends feeling ids in the expected word-for-feeling payload', async () => {
+  const originalFetch = global.fetch;
+  const mockedFetch = jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    headers: {get: () => 'application/json'},
+    json: async () => ({check_id: 99, feeling_ids: [7], cards: []}),
+  });
+
+  global.fetch = mockedFetch as typeof fetch;
+
+  try {
+    const {getRecommendations} = await import('../src/api/devotions');
+    await getRecommendations([7], 'token-123');
+
+    expect(mockedFetch).toHaveBeenCalledTimes(1);
+    const requestBody = JSON.parse((mockedFetch.mock.calls[0] as [RequestInfo, RequestInit])[1].body as string);
+    expect(requestBody).toEqual([7]);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

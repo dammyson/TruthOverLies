@@ -11,10 +11,15 @@ export const FEELING_OPTIONS: FeelingOption[] = [
   'Heavy',
 ];
 
+export function normalizeFeelingName(name?: string | null): string {
+  if (!name) return '';
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
 export function parseFeelingName(name?: string | null): FeelingOption | null {
   if (!name?.trim()) return null;
-  const normalized = name.trim().toLowerCase();
-  return FEELING_OPTIONS.find(f => f.toLowerCase() === normalized) ?? null;
+  const normalized = normalizeFeelingName(name);
+  return FEELING_OPTIONS.find(f => normalizeFeelingName(f) === normalized) ?? null;
 }
 
 export function parseFeelingNames(names: Array<string | null | undefined>): FeelingOption[] {

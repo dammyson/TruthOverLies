@@ -91,6 +91,7 @@ function ResultsScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: spacing.xs,
+          marginTop: spacing.xs,
         },
         cardMeta: {
           flex: 1,
@@ -191,7 +192,7 @@ function ResultsScreen() {
               <View style={styles.cardContent}>
                 <View style={styles.cardTopRow}>
                   <View style={styles.cardMeta}>
-                    <Text style={styles.cardBadge}>{badge}</Text>
+                    <Text style={styles.cardBadge}></Text>
                     <Text style={styles.cardTitle}>{card.title}</Text>
                   </View>
                   <View style={styles.cardActions}>
