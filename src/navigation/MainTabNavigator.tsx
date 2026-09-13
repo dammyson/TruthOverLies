@@ -1,9 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Platform, View} from 'react-native';
+import {Linking, Platform, View} from 'react-native';
 import TabView, {SceneMap} from 'react-native-bottom-tabs';
 import {useBibleNav} from '../context/BibleNavContext';
 import {useTabNav} from '../context/TabNavContext';
 import * as bibleRepo from '../bible/bibleRepo';
+import {resolveReferenceToBibleTarget} from '../utils/verseNavigation';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import BibleHomeScreen from '../screens/bible/BibleHomeScreen';
@@ -60,6 +61,7 @@ const routes = [
 ];
 
 const BIBLE_TAB_INDEX = 2;
+const SAVED_TAB_INDEX = 1;
 
 const JOURNAL_TAB_THRESHOLD = 3; // hide FAB on profile (3) and more (4)
 
@@ -70,7 +72,7 @@ function MainTabNavigator() {
   const [editingEntry, setEditingEntry] = useState<Journal | null>(null);
   const pendingEntry = useRef<{entry: Journal | null} | null>(null);
   const {colors} = useTheme();
-  const {pending} = useBibleNav();
+  const {pending, navigateTo} = useBibleNav();
   const {registerJump} = useTabNav();
 
   useEffect(() => {
@@ -80,6 +82,74 @@ function MainTabNavigator() {
   useEffect(() => {
     if (pending) setIndex(BIBLE_TAB_INDEX);
   }, [pending]);
+
+  useEffect(() => {
+    const handleWidgetLink = async (url: string) => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol.toLowerCase() !== 'godsplace:') {
+          return;
+        }
+
+        const host = parsed.host.toLowerCase();
+        const path = parsed.pathname.replace(/^\/+/, '').toLowerCase();
+        const route = [host, path].filter(Boolean).join('/');
+
+        if (route === 'home') {
+          setIndex(0);
+          return;
+        }
+
+        if (route === 'saved') {
+          setIndex(SAVED_TAB_INDEX);
+          return;
+        }
+
+        if (route === 'bible') {
+          setIndex(BIBLE_TAB_INDEX);
+          return;
+        }
+
+        if (route === 'journal/new') {
+          setIndex(0);
+          pendingEntry.current = {entry: null};
+          setJournalOpen(false);
+          setEditingEntry(null);
+          setEntryOpen(true);
+          return;
+        }
+
+        if (route === 'verse') {
+          const reference = parsed.searchParams.get('reference');
+          if (!reference) {
+            return;
+          }
+
+          const target = await resolveReferenceToBibleTarget(reference);
+          if (target) {
+            navigateTo(target);
+            setIndex(BIBLE_TAB_INDEX);
+          }
+        }
+      } catch {
+        // Ignore malformed deep links.
+      }
+    };
+
+    Linking.getInitialURL().then(initial => {
+      if (initial) {
+        void handleWidgetLink(initial);
+      }
+    });
+
+    const sub = Linking.addEventListener('url', event => {
+      void handleWidgetLink(event.url);
+    });
+
+    return () => {
+      sub.remove();
+    };
+  }, [navigateTo]);
 
   const handleNewEntry = () => {
     pendingEntry.current = {entry: null};

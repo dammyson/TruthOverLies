@@ -1,6 +1,6 @@
 import React, {createContext, useCallback, useContext, useState} from 'react';
 
-type BibleNavTarget = {
+export type BibleNavTarget = {
   bookId: string;
   bookName: string;
   chapter: number;
