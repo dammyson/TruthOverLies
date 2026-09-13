@@ -175,11 +175,17 @@ function HomeScreen({navigation}: Props) {
     });
   };
 
+  const [widgetAdded, setWidgetAdded] = useState(false);
+  const widgetResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleAddWidgetVerse = () => {
     syncVerseToWidget({
       text: featuredVerse.text,
       reference: featuredVerse.reference,
     });
+    setWidgetAdded(true);
+    if (widgetResetTimer.current) clearTimeout(widgetResetTimer.current);
+    widgetResetTimer.current = setTimeout(() => setWidgetAdded(false), 1500);
   };
 
   useEffect(() => {
@@ -523,7 +529,7 @@ function HomeScreen({navigation}: Props) {
                 onPress={handleAddWidgetVerse}
                 style={({pressed}) => [styles.heroWidgetButton, pressed && {opacity: 0.8}]}
               >
-                <Text style={styles.heroWidgetButtonText}>Add Widget</Text>
+                <Text style={styles.heroWidgetButtonText}>{widgetAdded ? 'Added ✓' : 'Add Widget'}</Text>
               </Pressable>
               <ShareIconButton
                 onPress={handleShareFeaturedVerse}
