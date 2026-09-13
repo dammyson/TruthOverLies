@@ -3,7 +3,6 @@ import {Linking, Platform, View} from 'react-native';
 import TabView, {SceneMap} from 'react-native-bottom-tabs';
 import {useBibleNav} from '../context/BibleNavContext';
 import {useTabNav} from '../context/TabNavContext';
-import * as bibleRepo from '../bible/bibleRepo';
 import {resolveReferenceToBibleTarget} from '../utils/verseNavigation';
 
 import HomeStackNavigator from './HomeStackNavigator';
@@ -84,55 +83,66 @@ function MainTabNavigator() {
   }, [pending]);
 
   useEffect(() => {
+    // new URL() is unreliable with custom schemes in Hermes — parse manually.
+    function parseWidgetUrl(raw: string): {route: string; params: Record<string, string>} | null {
+      const match = raw.match(/^godsplace:\/\/([^?]*)(?:\?(.*))?$/i);
+      if (!match) {
+        return null;
+      }
+      const route = (match[1] ?? '').toLowerCase().replace(/^\/+|\/+$/g, '');
+      const queryStr = match[2] ?? '';
+      const params: Record<string, string> = {};
+      queryStr.split('&').filter(Boolean).forEach(part => {
+        const eqIdx = part.indexOf('=');
+        if (eqIdx === -1) {
+          return;
+        }
+        const key = decodeURIComponent(part.slice(0, eqIdx));
+        const val = decodeURIComponent(part.slice(eqIdx + 1));
+        params[key] = val;
+      });
+      return {route, params};
+    }
+
     const handleWidgetLink = async (url: string) => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.protocol.toLowerCase() !== 'godsplace:') {
+      const parsed = parseWidgetUrl(url);
+      if (!parsed) {
+        return;
+      }
+
+      const {route, params} = parsed;
+
+      if (route === 'home') {
+        setIndex(0);
+        return;
+      }
+
+      if (route === 'saved') {
+        setIndex(SAVED_TAB_INDEX);
+        return;
+      }
+
+      if (route === 'bible') {
+        setIndex(BIBLE_TAB_INDEX);
+        return;
+      }
+
+      if (route === 'journal/new') {
+        setIndex(0);
+        setJournalOpen(true);
+        return;
+      }
+
+      if (route === 'verse') {
+        const reference = params.reference;
+        if (!reference) {
           return;
         }
-
-        const host = parsed.host.toLowerCase();
-        const path = parsed.pathname.replace(/^\/+/, '').toLowerCase();
-        const route = [host, path].filter(Boolean).join('/');
-
-        if (route === 'home') {
-          setIndex(0);
-          return;
-        }
-
-        if (route === 'saved') {
-          setIndex(SAVED_TAB_INDEX);
-          return;
-        }
-
-        if (route === 'bible') {
+        const target = await resolveReferenceToBibleTarget(reference);
+        if (target) {
+          navigateTo(target);
           setIndex(BIBLE_TAB_INDEX);
-          return;
         }
-
-        if (route === 'journal/new') {
-          setIndex(0);
-          pendingEntry.current = {entry: null};
-          setJournalOpen(false);
-          setEditingEntry(null);
-          setEntryOpen(true);
-          return;
-        }
-
-        if (route === 'verse') {
-          const reference = parsed.searchParams.get('reference');
-          if (!reference) {
-            return;
-          }
-
-          const target = await resolveReferenceToBibleTarget(reference);
-          if (target) {
-            navigateTo(target);
-            setIndex(BIBLE_TAB_INDEX);
-          }
-        }
-      } catch {
-        // Ignore malformed deep links.
       }
     };
 

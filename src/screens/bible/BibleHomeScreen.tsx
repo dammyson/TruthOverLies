@@ -643,7 +643,8 @@ function BibleHomeScreen() {
       <BibleSearchModal
         visible={searchVisible}
         translation={translation}
-        onSelect={(bId, bName, ch, cc) => {
+        onSelect={(bId, bName, ch, cc, verse) => {
+          pendingHighlightRef.current = verse ?? null;
           setBookId(bId);
           setBookName(bName);
           setChapter(ch);

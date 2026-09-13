@@ -28,11 +28,11 @@ const TRENDING = [
   {label: 'Psalm 91', book: 'PSA', chapter: 91},
   {label: 'For I Know The Plans I Have For You', book: 'JER', chapter: 29},
   {label: 'Ephesians 4', book: 'EPH', chapter: 4},
-  {label: 'John 3:16', book: 'JHN', chapter: 3},
+  {label: 'John 3:16', book: 'JHN', chapter: 3, verse: 16},
   {label: 'Romans 8', book: 'ROM', chapter: 8},
   {label: 'Isaiah 40', book: 'ISA', chapter: 40},
   {label: 'Matthew 5', book: 'MAT', chapter: 5},
-  {label: 'Proverbs 3:5', book: 'PRO', chapter: 3},
+  {label: 'Proverbs 3:5', book: 'PRO', chapter: 3, verse: 5},
 ];
 
 function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
@@ -61,7 +61,7 @@ function XMark({size = 10, color = '#fff'}: {size?: number; color?: string}) {
 type Props = {
   visible: boolean;
   translation: string;
-  onSelect: (bookId: string, bookName: string, chapter: number, chapterCount: number) => void;
+  onSelect: (bookId: string, bookName: string, chapter: number, chapterCount: number, verse?: number) => void;
   onClose: () => void;
 };
 
@@ -142,8 +142,8 @@ function BibleSearchModal({visible, translation, onSelect, onClose}: Props) {
   }, []);
 
   const handleSelect = useCallback(
-    (bookId: string, bookName: string, chapter: number, chapterCount: number) => {
-      onSelect(bookId, bookName, chapter, chapterCount);
+    (bookId: string, bookName: string, chapter: number, chapterCount: number, verse?: number) => {
+      onSelect(bookId, bookName, chapter, chapterCount, verse);
       onClose();
     },
     [onSelect, onClose],
@@ -152,7 +152,7 @@ function BibleSearchModal({visible, translation, onSelect, onClose}: Props) {
   const handleTrending = useCallback(
     (item: (typeof TRENDING)[number]) => {
       const book = books.find(b => b.id === item.book);
-      if (book) handleSelect(book.id, book.name, item.chapter, book.chapter_count);
+      if (book) handleSelect(book.id, book.name, item.chapter, book.chapter_count, item.verse);
     },
     [books, handleSelect],
   );
@@ -414,6 +414,7 @@ function BibleSearchModal({visible, translation, onSelect, onClose}: Props) {
                           item.bookName,
                           item.chapter,
                           book?.chapter_count ?? item.chapter,
+                          item.verse,
                         );
                       }}>
                       <Text style={s.verseRef}>
