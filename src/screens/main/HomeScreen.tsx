@@ -31,6 +31,7 @@ import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import {FeelingOption} from '../../types/app';
 import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
+import {syncVerseToWidget} from '../../widgets/widgetBridge';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
 
@@ -39,6 +40,10 @@ type FeelingTab = 'feelings' | 'struggles';
 const HERO_HEIGHT = 180;
 const SEG_PAD = 4;
 const SEG_GAP = 4;
+const DEFAULT_FEATURED_VERSE = {
+  text: 'But they that wait upon the Lord shall renew their strength.',
+  reference: 'Isaiah 40:31',
+};
 
 function HomeScreen({navigation}: Props) {
   const {
@@ -152,10 +157,11 @@ function HomeScreen({navigation}: Props) {
     };
   }, []);
 
-  const featuredVerse = verseOfTheDay ?? {
-    text: 'But they that wait upon the Lord shall renew their strength.',
-    reference: 'Isaiah 40:31',
-  };
+  const featuredVerse = verseOfTheDay ?? DEFAULT_FEATURED_VERSE;
+
+  useEffect(() => {
+    syncVerseToWidget(verseOfTheDay ?? DEFAULT_FEATURED_VERSE);
+  }, [verseOfTheDay]);
 
   const handleShareFeaturedVerse = () => {
     setSharePayload({
@@ -166,6 +172,13 @@ function HomeScreen({navigation}: Props) {
       moment: 'Daily verse',
       categoryName: 'Daily Verse',
       accentColor: null,
+    });
+  };
+
+  const handleAddWidgetVerse = () => {
+    syncVerseToWidget({
+      text: featuredVerse.text,
+      reference: featuredVerse.reference,
     });
   };
 
@@ -261,7 +274,7 @@ function HomeScreen({navigation}: Props) {
           gap: spacing.sm,
           borderTopWidth: StyleSheet.hairlineWidth,
           borderTopColor: 'rgba(255,255,255,0.18)',
-          maxWidth: '82%',
+          maxWidth: '100%',
           paddingTop: spacing.xs,
         },
         heroVerseText: {
@@ -281,6 +294,23 @@ function HomeScreen({navigation}: Props) {
           padding: 6,
           borderRadius: 999,
           backgroundColor: 'rgba(255,255,255,0.12)',
+        },
+        heroWidgetButton: {
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 999,
+          backgroundColor: 'rgba(255,255,255,0.16)',
+        },
+        heroWidgetButtonText: {
+          ...typography.caption2,
+          color: '#FFF5E6',
+          fontWeight: '700',
+          letterSpacing: 0.2,
+        },
+        heroActionRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: spacing.xs,
         },
         // ── Feeling panel ─────────────────────────────────────────
         panelWrapper: {
@@ -486,12 +516,22 @@ function HomeScreen({navigation}: Props) {
           </Animated.Text>
           <View style={styles.heroVerseWrap}>
             <VerseLink reference={featuredVerse.reference} style={styles.heroReferenceText} />
-            <ShareIconButton
-              onPress={handleShareFeaturedVerse}
-              color="#F8E9D9"
-              size={16}
-              style={styles.heroShareButton}
-            />
+            <View style={styles.heroActionRow}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add verse to widget"
+                onPress={handleAddWidgetVerse}
+                style={({pressed}) => [styles.heroWidgetButton, pressed && {opacity: 0.8}]}
+              >
+                <Text style={styles.heroWidgetButtonText}>Add Widget</Text>
+              </Pressable>
+              <ShareIconButton
+                onPress={handleShareFeaturedVerse}
+                color="#F8E9D9"
+                size={16}
+                style={styles.heroShareButton}
+              />
+            </View>
           </View>
         </View>
       </View>
