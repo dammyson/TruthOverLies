@@ -8,6 +8,11 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# RN 0.86 prebuilt core can miss some Fabric/debug C++ symbols with New Architecture.
+# Force source build for both RN dependencies and RN core to avoid linker undefined symbols.
+ENV['RCT_USE_RN_DEP'] = '0'
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green

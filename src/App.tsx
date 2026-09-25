@@ -6,6 +6,7 @@ import {BibleNavProvider} from './context/BibleNavContext';
 import {TabNavProvider} from './context/TabNavContext';
 import {ScriptureProvider} from './context/ScriptureContext';
 import {JournalProvider} from './context/JournalContext';
+import {SermonNoteProvider} from './context/SermonNoteContext';
 import AppNavigator from './navigation/AppNavigator';
 
 function App() {
@@ -16,7 +17,9 @@ function App() {
           <TabNavProvider>
             <ScriptureProvider>
               <JournalProvider>
-                <AppNavigator />
+                <SermonNoteProvider>
+                  <AppNavigator />
+                </SermonNoteProvider>
               </JournalProvider>
             </ScriptureProvider>
           </TabNavProvider>

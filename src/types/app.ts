@@ -52,6 +52,15 @@ export type Journal = {
   createdAt: string;
 };
 
+export type SermonNote = {
+  id: number;
+  title: string;
+  sermonDate: string;
+  body: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type SavedScripture = {
   id: number;
   categoryId: number | null;

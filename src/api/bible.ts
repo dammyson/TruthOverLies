@@ -22,6 +22,12 @@ export type BibleVerse = {
   text: string;
 };
 
+export type BiblePassageTitle = {
+  verse_start: number;
+  verse_end: number | null;
+  title: string;
+};
+
 export type BibleContentResponse = {
   translation: string;
   book_id: string;
@@ -29,6 +35,12 @@ export type BibleContentResponse = {
   start_chapter: number;
   start_verse: number;
   items: BibleVerse[];
+  passage_titles: Array<{
+    chapter: number;
+    verse_start: number;
+    verse_end: number | null;
+    title: string;
+  }>;
 };
 
 export type BibleDownloadBook = {
@@ -40,6 +52,11 @@ export type BibleDownloadResponse = {
   version: number;
   language: string;
   books: {[bookId: string]: BibleDownloadBook};
+  passage_titles?: {
+    [bookId: string]: {
+      [chapter: string]: BiblePassageTitle[];
+    };
+  };
 };
 
 export type BibleListItem = {

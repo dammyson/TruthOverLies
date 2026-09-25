@@ -21,7 +21,7 @@ import BookChapterPickerModal from '../../components/BookChapterPickerModal';
 import TranslationPickerModal from '../../components/TranslationPickerModal';
 import {useTheme} from '../../context/ThemeContext';
 import * as bibleRepo from '../../bible/bibleRepo';
-import {BibleVerse} from '../../api/bible';
+import {BiblePassageTitle, BibleVerse} from '../../api/bible';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import {renderOsisRichText} from '../../bible/osisRichText';
@@ -66,6 +66,7 @@ function ReaderScreen({route, navigation}: Props) {
   );
 
   const [verses, setVerses] = useState<BibleVerse[]>([]);
+  const [passageTitles, setPassageTitles] = useState<BiblePassageTitle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -81,11 +82,12 @@ function ReaderScreen({route, navigation}: Props) {
       setLoading(true);
       setError(false);
       try {
-        const data = await bibleRepo.getChapter(t, bId, ch);
-        const unique = data.filter(
+        const data = await bibleRepo.getChapterContent(t, bId, ch);
+        const unique = data.verses.filter(
           (v, i, arr) => arr.findIndex(x => x.verse === v.verse) === i,
         );
         setVerses(unique);
+        setPassageTitles(data.passageTitles);
         scrollRef.current?.scrollTo({y: 0, animated: false});
       } catch {
         setError(true);
@@ -173,6 +175,19 @@ function ReaderScreen({route, navigation}: Props) {
           paddingBottom: 120,
         },
         paragraph: {
+          ...typography.body,
+          color: colors.text,
+          lineHeight: 34,
+          fontSize: 18,
+        },
+        passageTitle: {
+          ...typography.subhead,
+          color: colors.primaryDark,
+          fontWeight: '700',
+          marginTop: spacing.md,
+          marginBottom: spacing.xs,
+        },
+        verseText: {
           ...typography.body,
           color: colors.text,
           lineHeight: 34,
@@ -266,18 +281,20 @@ function ReaderScreen({route, navigation}: Props) {
             ref={scrollRef}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}>
-            {/* Inline paragraph with superscript-style verse numbers */}
-            <Text style={styles.paragraph}>
-              {verses.map(v => {
-                return (
-                  <Text key={`${bookId}-${chapter}-${v.verse}`}>
+            {verses.map(v => {
+              const section = passageTitles.find(s => s.verse_start === v.verse);
+              return (
+                <View key={`${bookId}-${chapter}-${v.verse}`}>
+                  {section ? (
+                    <Text style={styles.passageTitle}>{section.title}</Text>
+                  ) : null}
+                  <Text style={styles.paragraph}>
                     <Text style={styles.verseNum}>{v.verse} </Text>
                     {renderOsisRichText(v.text, styles.verseText)}
-                    {'  '}
                   </Text>
-                );
-              })}
-            </Text>
+                </View>
+              );
+            })}
           </ScrollView>
         )}
 

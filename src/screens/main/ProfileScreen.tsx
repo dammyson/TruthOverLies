@@ -1,5 +1,7 @@
 import React, {useMemo, useRef, useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Path} from 'react-native-svg';
 
@@ -8,9 +10,11 @@ import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
 import {useJournals} from '../../context/JournalContext';
 import {useScriptures} from '../../context/ScriptureContext';
+import {useSermonNotes} from '../../context/SermonNoteContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import {Journal} from '../../types/app';
+import {RootStackParamList} from '../../navigation/RootNavigator';
 import JournalListModal from '../journal/JournalListModal';
 import JournalEntrySheet from '../journal/JournalEntrySheet';
 
@@ -123,9 +127,11 @@ function ShieldIcon({size = 20, color = '#4A2F24'}: {size?: number; color?: stri
 }
 
 function ProfileScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {currentUser, savedCards, selectedFeelings} = useAppContext();
   const {colors, isDark} = useTheme();
   const {journals} = useJournals();
+  const {sermonNotes} = useSermonNotes();
   const {scriptures} = useScriptures();
   const [journalOpen, setJournalOpen] = useState(false);
   const [entryOpen, setEntryOpen] = useState(false);
@@ -425,6 +431,50 @@ function ProfileScreen() {
           fontWeight: '700',
           color: colors.primaryDark,
         },
+        sermonCard: {
+          borderRadius: radius.xl,
+          overflow: 'hidden',
+          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          marginBottom: spacing.md,
+        },
+        sermonContent: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: spacing.lg,
+          gap: spacing.md,
+        },
+        sermonIconWrapper: {
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isDark ? '#2C4A59' : '#DCEBF2',
+        },
+        sermonTitle: {
+          ...typography.headline,
+          fontWeight: '600',
+          color: colors.text,
+        },
+        sermonSubtitle: {
+          ...typography.footnote,
+          color: colors.muted,
+          marginTop: 2,
+        },
+        sermonBadge: {
+          paddingHorizontal: 10,
+          paddingVertical: 4,
+          borderRadius: radius.full,
+          backgroundColor: isDark ? '#2C4A59' : '#DCEBF2',
+          marginRight: spacing.xs,
+        },
+        sermonBadgeText: {
+          ...typography.caption1,
+          fontWeight: '700',
+          color: isDark ? '#9FD2E8' : '#2C4A59',
+        },
       }),
     [colors, isDark],
   );
@@ -554,6 +604,59 @@ function ProfileScreen() {
             {journals.length > 0 && (
               <View style={styles.journalBadge}>
                 <Text style={styles.journalBadgeText}>{journals.length}</Text>
+              </View>
+            )}
+            <ChevronRightIcon color={colors.muted} />
+          </View>
+        </Pressable>
+
+        <Pressable
+          style={({pressed}) => [styles.sermonCard, pressed && {opacity: 0.8}]}
+          onPress={() => navigation.navigate('SermonNoteList')}>
+          <View style={styles.sermonContent}>
+            <View style={styles.sermonIconWrapper}>
+              <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                <Path
+                  d="M12 3v10"
+                  stroke={isDark ? '#9FD2E8' : '#2C4A59'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Path
+                  d="M8 7h8"
+                  stroke={isDark ? '#9FD2E8' : '#2C4A59'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Path
+                  d="M6 15h12"
+                  stroke={isDark ? '#9FD2E8' : '#2C4A59'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <Path
+                  d="M8 19h8"
+                  stroke={isDark ? '#9FD2E8' : '#2C4A59'}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </Svg>
+            </View>
+            <View style={styles.journalTextWrapper}>
+              <Text style={styles.sermonTitle}>Sermon Notes</Text>
+              <Text style={styles.sermonSubtitle}>
+                {sermonNotes.length === 0
+                  ? 'Title, date, and full sermon reflections'
+                  : `${sermonNotes.length} ${sermonNotes.length === 1 ? 'note' : 'notes'} saved`}
+              </Text>
+            </View>
+            {sermonNotes.length > 0 && (
+              <View style={styles.sermonBadge}>
+                <Text style={styles.sermonBadgeText}>{sermonNotes.length}</Text>
               </View>
             )}
             <ChevronRightIcon color={colors.muted} />

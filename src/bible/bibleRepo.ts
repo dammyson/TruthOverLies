@@ -94,6 +94,20 @@ export async function getChapter(
   bookId: string,
   chapter: number,
 ): Promise<bibleApi.BibleVerse[]> {
+  const content = await getChapterContent(translation, bookId, chapter);
+  return content.verses;
+}
+
+export type ChapterContent = {
+  verses: bibleApi.BibleVerse[];
+  passageTitles: bibleApi.BiblePassageTitle[];
+};
+
+export async function getChapterContent(
+  translation: string,
+  bookId: string,
+  chapter: number,
+): Promise<ChapterContent> {
   // 1. Offline — read directly from the downloaded verses table
   if (await isTranslationDownloaded(translation)) {
     const db = getDb();
@@ -103,7 +117,21 @@ export async function getChapter(
     );
     const rows: Array<{verse: number; text: string}> = result.rows?._array ?? [];
     if (rows.length > 0) {
-      return rows.map(r => ({chapter, verse: r.verse, text: r.text}));
+      const titleResult = db.execute(
+        'SELECT verse_start, verse_end, title FROM passage_titles WHERE translation = ? AND book = ? AND chapter = ? ORDER BY verse_start ASC',
+        [translation, bookId, chapter],
+      );
+      const titleRows: Array<{verse_start: number; verse_end: number | null; title: string}> =
+        titleResult.rows?._array ?? [];
+
+      return {
+        verses: rows.map(r => ({chapter, verse: r.verse, text: r.text})),
+        passageTitles: titleRows.map(row => ({
+          verse_start: row.verse_start,
+          verse_end: row.verse_end,
+          title: row.title,
+        })),
+      };
     }
     // Offline storage is empty for this chapter — fall through to online
   }
@@ -111,13 +139,29 @@ export async function getChapter(
   // 2. Online — check cache then fetch
   const cacheKey = K.chapter(translation, bookId, chapter);
   const cached = cacheGet<bibleApi.BibleVerse[]>(cacheKey);
+  const passageTitleCacheKey = `${cacheKey}/passage-titles`;
+  const cachedTitles = cacheGet<bibleApi.BiblePassageTitle[]>(passageTitleCacheKey);
   if (cached) {
-    return cached;
+    return {
+      verses: cached,
+      passageTitles: cachedTitles ?? [],
+    };
   }
   const res = await bibleApi.getChapterContent(bookId, chapter, translation);
+  const chapterPassageTitles = (res.passage_titles ?? [])
+    .filter(section => section.chapter === chapter)
+    .map(section => ({
+      verse_start: section.verse_start,
+      verse_end: section.verse_end,
+      title: section.title,
+    }));
   const chapVerses = res.items.filter(v => v.chapter === chapter);
   cacheSet(cacheKey, chapVerses);
-  return chapVerses;
+  cacheSet(passageTitleCacheKey, chapterPassageTitles);
+  return {
+    verses: chapVerses,
+    passageTitles: chapterPassageTitles,
+  };
 }
 
 // ── Download status ───────────────────────────────────────────────────────────
@@ -188,6 +232,29 @@ export async function downloadTranslation(
       onProgress((index + 1) / totalBooks);
     });
 
+    const passageTitles = payload.passage_titles ?? {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    db.transaction((tx: any) => {
+      Object.entries(passageTitles).forEach(([bookId, chapterMap]) => {
+        Object.entries(chapterMap).forEach(([chapterStr, sections]) => {
+          const chapterNum = Number(chapterStr);
+          sections.forEach(section => {
+            tx.execute(
+              'INSERT OR REPLACE INTO passage_titles (translation, book, chapter, verse_start, verse_end, title) VALUES (?, ?, ?, ?, ?, ?)',
+              [
+                translationId,
+                bookId,
+                chapterNum,
+                Number(section.verse_start),
+                section.verse_end == null ? null : Number(section.verse_end),
+                section.title,
+              ],
+            );
+          });
+        });
+      });
+    });
+
     const version = Number(payload.version ?? 1);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     db.transaction((tx: any) => {
@@ -214,6 +281,7 @@ export async function deleteTranslation(translationId: string): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db.transaction((tx: any) => {
     tx.execute('DELETE FROM verses WHERE translation = ?', [translationId]);
+    tx.execute('DELETE FROM passage_titles WHERE translation = ?', [translationId]);
     tx.execute('DELETE FROM translations WHERE id = ?', [translationId]);
   });
   refreshDownloadedSet();

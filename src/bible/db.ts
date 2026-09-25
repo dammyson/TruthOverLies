@@ -47,5 +47,23 @@ export function getDb(): OPSQLiteConnection {
     ON verses (translation, book, chapter)
   `);
 
+  // Chapter section headings (e.g. "Hannah's Prayer")
+  _db.execute(`
+    CREATE TABLE IF NOT EXISTS passage_titles (
+      translation TEXT    NOT NULL,
+      book        TEXT    NOT NULL,
+      chapter     INTEGER NOT NULL,
+      verse_start INTEGER NOT NULL,
+      verse_end   INTEGER,
+      title       TEXT    NOT NULL,
+      PRIMARY KEY (translation, book, chapter, verse_start)
+    )
+  `);
+
+  _db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_passage_title_lookup
+    ON passage_titles (translation, book, chapter)
+  `);
+
   return _db;
 }
