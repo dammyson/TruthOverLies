@@ -44,7 +44,7 @@ function EllipsisCircle({size = 20, color = '#8E8E93'}: {size?: number; color?: 
   );
 }
 import * as bibleRepo from '../../bible/bibleRepo';
-import {BibleVerse} from '../../api/bible';
+import {BiblePassageTitle, BibleVerse} from '../../api/bible';
 import BookChapterPickerModal from '../../components/BookChapterPickerModal';
 import TranslationPickerModal from '../../components/TranslationPickerModal';
 import BibleSearchModal from '../../components/BibleSearchModal';
@@ -70,6 +70,7 @@ function BibleHomeScreen() {
   const [translation, setTranslation] = useState(savedLocation.translation);
 
   const [verses, setVerses] = useState<BibleVerse[]>([]);
+  const [passageTitles, setPassageTitles] = useState<BiblePassageTitle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -149,12 +150,13 @@ function BibleHomeScreen() {
       verseYOffsets.current.clear();
       highlightScrolled.current = false;
       try {
-        const data = await bibleRepo.getChapter(t, bId, ch);
+        const data = await bibleRepo.getChapterContent(t, bId, ch);
         // Deduplicate by verse number in case the API returns duplicate entries
-        const unique = data.filter(
+        const unique = data.verses.filter(
           (v, i, arr) => arr.findIndex(x => x.verse === v.verse) === i,
         );
         setVerses(unique);
+        setPassageTitles(data.passageTitles);
         scrollRef.current?.scrollTo({y: 0, animated: false});
         if (pendingHighlightRef.current != null) {
           setHighlightVerse(pendingHighlightRef.current);
@@ -306,6 +308,14 @@ function BibleHomeScreen() {
           lineHeight: 28,
           fontSize: 17,
           flex: 1,
+        },
+        passageTitle: {
+          ...typography.subhead,
+          color: colors.primaryDark,
+          fontWeight: '700',
+          marginTop: spacing.md,
+          marginBottom: spacing.xs,
+          paddingHorizontal: spacing.xs,
         },
         skeletonList: {
           paddingHorizontal: spacing.lg,
@@ -554,33 +564,38 @@ function BibleHomeScreen() {
               {verses.map(v => {
                 const isSelected = selectedVerses.has(v.verse);
                 const hasSelection = selectedVerses.size > 0;
+                const section = passageTitles.find(s => s.verse_start === v.verse);
                 return (
-                  <Pressable
-                    key={`${bookId}-${chapter}-${v.verse}`}
-                    onPress={() => {
-                      if (hasSelection) {
-                        toggleVerseSelection(v.verse);
-                      }
-                    }}
-                    onLongPress={() => {
-                      if (!hasSelection) {
-                        toggleVerseSelection(v.verse);
-                      }
-                    }}
-                    style={({pressed}) => [
-                      styles.verseBlock,
-                      v.verse === highlightVerse && styles.verseHighlight,
-                      isSelected && styles.verseSelected,
-                      pressed && {opacity: 0.7},
-                    ]}
-                    onLayout={e => {
-                      verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
-                    }}>
-                    <Text style={styles.verseNum}>{v.verse}</Text>
-                    <Text style={styles.verseText}>
-                      {renderOsisRichText(v.text, styles.verseText)}
-                    </Text>
-                  </Pressable>
+                  <View key={`${bookId}-${chapter}-${v.verse}`}>
+                    {section ? (
+                      <Text style={styles.passageTitle}>{section.title}</Text>
+                    ) : null}
+                    <Pressable
+                      onPress={() => {
+                        if (hasSelection) {
+                          toggleVerseSelection(v.verse);
+                        }
+                      }}
+                      onLongPress={() => {
+                        if (!hasSelection) {
+                          toggleVerseSelection(v.verse);
+                        }
+                      }}
+                      style={({pressed}) => [
+                        styles.verseBlock,
+                        v.verse === highlightVerse && styles.verseHighlight,
+                        isSelected && styles.verseSelected,
+                        pressed && {opacity: 0.7},
+                      ]}
+                      onLayout={e => {
+                        verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
+                      }}>
+                      <Text style={styles.verseNum}>{v.verse}</Text>
+                      <Text style={styles.verseText}>
+                        {renderOsisRichText(v.text, styles.verseText)}
+                      </Text>
+                    </Pressable>
+                  </View>
                 );
               })}
             </ScrollView>
