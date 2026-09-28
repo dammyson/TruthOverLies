@@ -94,12 +94,8 @@ function SermonNoteDetailScreen({ route, navigation }: Props) {
       headerRight: () => (
         <View
           style={{
-            backgroundColor: isDark ? colors.surface : '#EDE8D8',
             borderRadius: radius.full,
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            borderWidth: StyleSheet.hairlineWidth,
-            borderColor: colors.border,
+            overflow: 'hidden',
           }}
         >
           <Text
@@ -107,6 +103,8 @@ function SermonNoteDetailScreen({ route, navigation }: Props) {
               ...typography.caption1,
               color: colors.muted,
               fontWeight: '600',
+              paddingHorizontal: 10,
+              paddingVertical: 4,
             }}
           >
             {noteId == null ? 'Draft' : 'Editing'}

@@ -22,7 +22,6 @@ type Props = NativeStackScreenProps<RootStackParamList, 'SermonNoteList'>;
 function SermonNoteListScreen({ navigation }: Props) {
   const { colors, isDark } = useTheme();
   const { sermonNotes, isLoading } = useSermonNotes();
-
   const styles = useMemo(
     () =>
       StyleSheet.create({

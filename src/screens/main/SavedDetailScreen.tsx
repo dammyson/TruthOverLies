@@ -3,11 +3,11 @@ import {Dimensions, Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, V
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
+import Svg, {Line, Path} from 'react-native-svg';
 
 import SkeletonBlock from '../../components/SkeletonBlock';
 import VerseLink from '../../components/VerseLink';
 import ShareCardSheet from '../../components/share/ShareCardSheet';
-import ShareIconButton from '../../components/share/ShareIconButton';
 import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
@@ -30,14 +30,46 @@ function SavedDetailScreen({route, navigation}: Props) {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <ShareIconButton
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Share"
           onPress={() => setShareOpen(true)}
-          color="#FFFDF5"
-          style={{marginRight: spacing.sm}}
-        />
+          style={({pressed}) => ({
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: isDark ? 'rgba(120,120,128,0.32)' : 'rgba(120,120,128,0.18)',
+            alignItems: 'center' as const,
+            justifyContent: 'center' as const,
+            overflow: 'hidden' as const,
+            opacity: pressed ? 0.6 : 1,
+          })}>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"
+              stroke={colors.primaryDark}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <Path
+              d="M16 6l-4-4-4 4"
+              stroke={colors.primaryDark}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <Line
+              x1="12" y1="2" x2="12" y2="15"
+              stroke={colors.primaryDark}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </Svg>
+        </Pressable>
       ),
     });
-  }, [navigation]);
+  }, [navigation, isDark, colors]);
 
   // Deterministic image per card — always the same image for the same reference
   const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(card.reference)}/800/600`;

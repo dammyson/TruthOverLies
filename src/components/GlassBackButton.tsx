@@ -1,6 +1,5 @@
 import React from 'react';
 import {Pressable, StyleSheet} from 'react-native';
-import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import Svg, {Path} from 'react-native-svg';
 
 import {useTheme} from '../context/ThemeContext';
@@ -10,25 +9,16 @@ type Props = {
 };
 
 function GlassBackButton({onPress}: Props) {
-  const {colors, isDark} = useTheme();
+  const {colors} = useTheme();
 
   return (
     <Pressable
       accessibilityLabel="Go back"
       accessibilityRole="button"
       onPress={onPress}
-      style={[styles.button, !isLiquidGlassSupported && {
-        backgroundColor: colors.surface,
-        borderWidth: 1,
-        borderColor: colors.border,
-      }]}>
-      {isLiquidGlassSupported && (
-        <LiquidGlassView
-          style={StyleSheet.absoluteFill}
-          effect="clear"
-          colorScheme={isDark ? 'dark' : 'light'}
-        />
-      )}
+      style={[
+        styles.button,
+      ]}>
       <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
         <Path
           d="M15 18l-6-6 6-6"
