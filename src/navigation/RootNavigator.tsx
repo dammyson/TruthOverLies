@@ -8,6 +8,7 @@ import ChapterGridScreen from '../screens/bible/ChapterGridScreen';
 import ReaderScreen from '../screens/bible/ReaderScreen';
 import SermonNoteDetailScreen from '../screens/sermon/SermonNoteDetailScreen';
 import SermonNoteListScreen from '../screens/sermon/SermonNoteListScreen';
+import GlassBackButton from '../components/GlassBackButton';
 import {DevotionCard} from '../types/app';
 import {useTheme} from '../context/ThemeContext';
 
@@ -49,26 +50,26 @@ function RootNavigator() {
       <Stack.Screen
         name="SavedDetail"
         component={SavedDetailScreen}
-        options={{
+        options={({navigation}) => ({
           headerShown: true,
           headerTitle: '',
-          headerBackTitle: '',
-          headerTintColor: '#FFFDF5',
+          headerBackVisible: false,
+          headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
           headerTransparent: true,
           headerShadowVisible: false,
-        }}
+        })}
       />
       <Stack.Screen
         name="Appearance"
         component={AppearanceScreen}
-        options={{
+        options={({navigation}) => ({
           headerShown: true,
           headerTitle: 'Appearance',
-          headerBackTitle: '',
-          headerTintColor: colors.primaryDark,
+          headerBackVisible: false,
+          headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
           headerShadowVisible: false,
           headerStyle: {backgroundColor: colors.background},
-        }}
+        })}
       />
       <Stack.Screen
         name="ChapterGrid"
@@ -97,26 +98,26 @@ function RootNavigator() {
       <Stack.Screen
         name="SermonNoteList"
         component={SermonNoteListScreen}
-        options={{
+        options={({navigation}) => ({
           headerShown: true,
           headerTitle: 'Sermon Notes',
-          headerBackTitle: '',
-          headerTintColor: colors.primaryDark,
+          headerBackVisible: false,
+          headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
           headerShadowVisible: false,
           headerStyle: {backgroundColor: colors.background},
-        }}
+        })}
       />
       <Stack.Screen
         name="SermonNoteDetail"
         component={SermonNoteDetailScreen}
-        options={{
+        options={({navigation}) => ({
           headerShown: true,
           headerTitle: 'Sermon Note',
-          headerBackTitle: '',
-          headerTintColor: colors.primaryDark,
+          headerBackVisible: false,
+          headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
           headerShadowVisible: false,
           headerStyle: {backgroundColor: colors.background},
-        }}
+        })}
       />
     </Stack.Navigator>
   );

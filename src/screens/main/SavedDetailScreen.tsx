@@ -1,5 +1,5 @@
 import React, {useLayoutEffect, useMemo, useState} from 'react';
-import {Dimensions, Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {Dimensions, Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, View} from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import LinearGradient from 'react-native-linear-gradient';
@@ -53,6 +53,7 @@ function SavedDetailScreen({route, navigation}: Props) {
           width: SCREEN_WIDTH,
           height: HERO_HEIGHT,
           marginLeft: -H_PAD,
+          marginTop: 0,
         },
         heroImage: {
           ...StyleSheet.absoluteFill,
@@ -121,17 +122,14 @@ function SavedDetailScreen({route, navigation}: Props) {
         },
         shareButton: {
           marginTop: spacing.lg,
-          borderRadius: radius.xl,
-          overflow: 'hidden',
-        },
-        shareGradient: {
-          minHeight: 52,
+          borderRadius: radius.lg,
+          backgroundColor: colors.primaryDark,
+          paddingVertical: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingHorizontal: spacing.lg,
         },
         shareButtonText: {
-          ...typography.headline,
+          ...typography.subhead,
           fontWeight: '700',
           color: '#FFFDF5',
         },
@@ -141,12 +139,13 @@ function SavedDetailScreen({route, navigation}: Props) {
 
   return (
     <>
+    <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
     <ScrollView
       style={styles.scroll}
-      contentInsetAdjustmentBehavior="automatic"
+      contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{
         paddingHorizontal: H_PAD,
-        paddingTop: H_PAD,
+        paddingTop: 0,
         paddingBottom: 100,
       }}>
 
@@ -207,14 +206,8 @@ function SavedDetailScreen({route, navigation}: Props) {
           accessibilityRole="button"
           accessibilityLabel="Share this word"
           onPress={() => setShareOpen(true)}
-          style={({pressed}) => [styles.shareButton, pressed && {opacity: 0.85}]}>
-          <LinearGradient
-            colors={[colors.primaryDark, colors.primary]}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.shareGradient}>
-            <Text style={styles.shareButtonText}>Share this word</Text>
-          </LinearGradient>
+          style={({pressed}) => [styles.shareButton, pressed && {opacity: 0.82}]}>
+          <Text style={styles.shareButtonText}>Share this word</Text>
         </Pressable>
       </View>
     </ScrollView>

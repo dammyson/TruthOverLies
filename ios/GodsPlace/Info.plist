@@ -47,7 +47,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Choose a photo to use as the background on your share card.</string>
+	<string>Choose a photo to insert into your sermon notes or use as a share card background.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

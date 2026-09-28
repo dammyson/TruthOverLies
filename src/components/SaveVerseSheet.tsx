@@ -15,18 +15,21 @@ import LinearGradient from 'react-native-linear-gradient';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import {useTheme} from '../context/ThemeContext';
 import {useScriptures} from '../context/ScriptureContext';
+import CloseButton from './CloseButton';
 import {ScriptureCategory} from '../types/app';
 import {typography} from '../theme/typography';
 import {radius, spacing} from '../theme/spacing';
 
 const CATEGORY_PRESET_COLORS = [
-  '#4A2F24', // faith — earthy brown
-  '#3D9A6A', // hope — forest green
-  '#7B6BB8', // wisdom — royal purple
-  '#C4943A', // praise — golden amber
-  '#5B8DB8', // peace — sky blue
-  '#B85B5B', // love — deep red
+  '#4A2F24',
+  '#3D9A6A',
+  '#7B6BB8',
+  '#C4943A',
+  '#5B8DB8',
+  '#B85B5B',
 ];
+
+const PRIMARY_DARK = '#361f1a';
 
 type Props = {
   visible: boolean;
@@ -119,29 +122,11 @@ function SaveVerseSheet({
   const [moment, setMoment] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  // New category inline form
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState(CATEGORY_PRESET_COLORS[0]);
   const [isCatSaving, setIsCatSaving] = useState(false);
 
-  // Dynamic note input height — expands to fill empty sheet space
-  const [noteInputHeight, setNoteInputHeight] = useState(80);
-  const svHeightRef = useRef(0);
-  const contentHeightRef = useRef(0);
-  const hasAdjustedRef = useRef(false);
-
-  const maybeExpandNote = useCallback(() => {
-    if (hasAdjustedRef.current) return;
-    if (svHeightRef.current === 0 || contentHeightRef.current === 0) return;
-    const gap = svHeightRef.current - contentHeightRef.current;
-    hasAdjustedRef.current = true;
-    if (gap > 24) {
-      setNoteInputHeight(prev => prev + gap - 48);
-    }
-  }, []);
-
-  // Reset form state when sheet opens
   const [_resetKey, setResetKey] = useState(0);
   React.useEffect(() => {
     if (visible) {
@@ -150,10 +135,6 @@ function SaveVerseSheet({
       setShowNewCategory(false);
       setNewCatName('');
       setNewCatColor(CATEGORY_PRESET_COLORS[0]);
-      setNoteInputHeight(80);
-      svHeightRef.current = 0;
-      contentHeightRef.current = 0;
-      hasAdjustedRef.current = false;
       setResetKey(k => k + 1);
     }
   }, [visible]);
@@ -198,42 +179,51 @@ function SaveVerseSheet({
     }
   }, [createCategory, newCatName, newCatColor]);
 
+  const shadowColor = isDark ? 'rgba(54,31,26,0.35)' : 'rgba(54,31,26,0.12)';
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
-        sheet: {
-          flex: 1,
-          backgroundColor: colors.background,
-          overflow: 'hidden',
-        },
-        headerGradient: {
-          paddingTop: 12,
-          paddingHorizontal: spacing.lg,
-          paddingBottom: spacing.sm,
-          height: 110,
-          borderTopLeftRadius: 30,
-          borderTopRightRadius: 30,
-          marginTop: 10,
-        },
+        sheet: {flex: 1, backgroundColor: colors.background},
+        kav: {flex: 1},
         grabber: {
           width: 36,
           height: 4,
           borderRadius: 2,
-          backgroundColor: 'rgba(255,255,255,0.35)',
+          backgroundColor: colors.border,
           alignSelf: 'center',
-          marginBottom: spacing.sm,
+          marginTop: spacing.sm,
+          marginBottom: spacing.xs,
+        },
+        closeRow: {
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          paddingHorizontal: spacing.lg,
+          paddingTop: spacing.xs,
+          paddingBottom: spacing.sm,
+        },
+        headerWrapper: {
+          paddingHorizontal: spacing.lg,
+          paddingBottom: spacing.lg,
+        },
+        headerCard: {
+          backgroundColor: PRIMARY_DARK,
+          borderRadius: 24,
+          padding: spacing.lg,
         },
         headerLabel: {
           ...typography.caption1,
           fontWeight: '700',
-          color: 'rgba(255,255,255,0.6)',
-          letterSpacing: 1.2,
-          marginBottom: 4,
+          color: 'rgba(255,255,255,0.5)',
+          letterSpacing: 1.4,
+          textTransform: 'uppercase',
+          marginBottom: spacing.xs,
         },
         headerReference: {
           ...typography.title2,
           fontWeight: '800',
           color: '#FFFDF5',
+          letterSpacing: -0.3,
         },
         headerTranslation: {
           ...typography.footnote,
@@ -241,43 +231,54 @@ function SaveVerseSheet({
           marginTop: 2,
         },
         body: {
+          flex: 1,
           paddingHorizontal: spacing.lg,
-          paddingTop: spacing.xs,
-          paddingBottom: spacing.md,
+          paddingTop: spacing.sm,
+        },
+        fieldBlock: {
+          marginBottom: spacing.lg,
+        },
+        sectionLabel: {
+          ...typography.caption1,
+          fontWeight: '700',
+          color: colors.muted,
+          letterSpacing: 0.9,
+          textTransform: 'uppercase',
+          marginBottom: spacing.sm,
+        },
+        fieldShadow: {
+          position: 'absolute',
+          top: 5,
+          left: 0,
+          right: 0,
+          bottom: -5,
+          borderRadius: 20,
+        },
+        fieldCard: {
+          borderRadius: 20,
+          backgroundColor: isDark ? '#1E1A14' : '#FFFFFF',
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: colors.border,
+          paddingHorizontal: spacing.md,
+          paddingVertical: spacing.md,
         },
         quoteBlock: {
-          marginTop: spacing.sm,
-          marginBottom: spacing.sm,
           paddingLeft: spacing.md,
           borderLeftWidth: 3,
-          borderLeftColor: colors.primaryDark,
+          borderLeftColor: PRIMARY_DARK,
         },
         quoteText: {
           ...typography.body,
           color: colors.text,
-          lineHeight: 24,
-          fontSize: 15,
+          lineHeight: 26,
         },
-        sectionLabel: {
-          ...typography.footnote,
-          fontWeight: '700',
-          color: colors.muted,
-          letterSpacing: 0.8,
-          marginBottom: spacing.xs,
-          marginTop: spacing.sm,
-        },
-        momentInput: {
-          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
-          borderRadius: radius.lg,
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm,
-          ...typography.subhead,
+        noteInput: {
+          ...typography.body,
           color: colors.text,
-          lineHeight: 22,
-          minHeight: 110,
+          lineHeight: 26,
           textAlignVertical: 'top',
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: colors.border,
+          minHeight: 110,
+          paddingTop: 0,
         },
         categoryRow: {paddingVertical: 4},
         addCatBtn: {
@@ -301,7 +302,7 @@ function SaveVerseSheet({
           marginTop: spacing.sm,
           padding: spacing.md,
           borderRadius: radius.lg,
-          backgroundColor: isDark ? colors.surface : colors.surfaceStrong,
+          backgroundColor: isDark ? colors.surface : '#FFFFFF',
           borderWidth: StyleSheet.hairlineWidth,
           borderColor: colors.border,
           gap: spacing.sm,
@@ -314,11 +315,7 @@ function SaveVerseSheet({
           paddingVertical: 8,
         },
         colorRow: {flexDirection: 'row', gap: 10, paddingTop: 4},
-        colorSwatch: {
-          width: 26,
-          height: 26,
-          borderRadius: 13,
-        },
+        colorSwatch: {width: 26, height: 26, borderRadius: 13},
         colorSwatchSelected: {
           borderWidth: 3,
           borderColor: colors.background,
@@ -333,10 +330,7 @@ function SaveVerseSheet({
           gap: spacing.sm,
           justifyContent: 'flex-end',
         },
-        cancelBtn: {
-          paddingHorizontal: spacing.md,
-          paddingVertical: 8,
-        },
+        cancelBtn: {paddingHorizontal: spacing.md, paddingVertical: 8},
         cancelBtnText: {
           ...typography.footnote,
           color: colors.muted,
@@ -346,30 +340,26 @@ function SaveVerseSheet({
           paddingHorizontal: spacing.md,
           paddingVertical: 8,
           borderRadius: radius.md,
-          backgroundColor: colors.primaryDark + '20',
+          backgroundColor: PRIMARY_DARK + '20',
         },
         createBtnText: {
           ...typography.footnote,
-          color: colors.primaryDark,
+          color: PRIMARY_DARK,
           fontWeight: '700',
         },
-        saveBtnContainer: {
+        saveBarOuter: {
           paddingHorizontal: spacing.lg,
           paddingTop: spacing.sm,
           paddingBottom: spacing.xl,
-          backgroundColor: colors.background,
-          borderTopWidth: StyleSheet.hairlineWidth,
-          borderTopColor: colors.border,
         },
         saveBtn: {
-          borderRadius: radius.xl,
+          height: 52,
+          borderRadius: radius.lg,
           overflow: 'hidden',
-          height: 50,
-          justifyContent: 'center',
+          backgroundColor: PRIMARY_DARK,
+          flexDirection: 'row',
           alignItems: 'center',
-        },
-        saveBtnGradient: {
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          justifyContent: 'center',
         },
         saveBtnText: {
           ...typography.headline,
@@ -390,151 +380,169 @@ function SaveVerseSheet({
       onDismiss={onClose}>
       <View style={styles.sheet}>
         <KeyboardAvoidingView
-          style={{flex: 1}}
+          style={styles.kav}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          {/* Decorative header gradient */}
-          <LinearGradient
-            colors={
-              isDark
-                ? ['#3E2010', '#2D160A', '#1A0E06']
-                : ['#5C3020', '#3E1E10', '#2D160E']
-            }
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
-            style={styles.headerGradient}>
-            <View style={styles.grabber} />
-            <Text style={styles.headerLabel}>SAVE SCRIPTURE</Text>
-            <Text style={styles.headerReference}>{reference}</Text>
-            <Text style={styles.headerTranslation}>{translation}</Text>
-          </LinearGradient>
 
-          {/* Scrollable body */}
-          <ScrollView
-            style={{flex: 1}}
-            contentContainerStyle={styles.body}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            onLayout={e => {
-              svHeightRef.current = e.nativeEvent.layout.height;
-              maybeExpandNote();
-            }}
-            onContentSizeChange={(_w, h) => {
-              contentHeightRef.current = h;
-              maybeExpandNote();
-            }}>
-            {/* Verse text */}
-            <View style={styles.quoteBlock}>
-              <Text style={styles.quoteText}>{verseText}</Text>
+          <View style={styles.grabber} />
+
+          {/* Close button — above the card */}
+          <View style={styles.closeRow}>
+            <CloseButton onPress={onClose} />
+          </View>
+
+          {/* Header card */}
+          <View style={styles.headerWrapper}>
+            <View style={styles.headerCard}>
+              <Text style={styles.headerLabel}>Save Scripture</Text>
+              <Text style={styles.headerReference}>{reference}</Text>
+              <Text style={styles.headerTranslation}>{translation}</Text>
             </View>
+          </View>
 
-            {/* Moment / personal note */}
-            <Text style={styles.sectionLabel}>PERSONAL NOTE</Text>
-            <TextInput
-              style={[styles.momentInput, {minHeight: noteInputHeight}]}
-              placeholder="What does this verse mean to you right now?"
-              placeholderTextColor={colors.placeholder}
-              value={moment}
-              onChangeText={setMoment}
-              multiline
-              maxLength={1000}
-            />
+          <ScrollView
+            style={styles.body}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
 
-            {/* Category picker */}
-            <Text style={styles.sectionLabel}>ADD TO COLLECTION</Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.categoryRow}
-              contentContainerStyle={{paddingBottom: 4}}>
-              {categories.map(cat => (
-                <CategoryChip
-                  key={cat.id}
-                  category={cat}
-                  selected={selectedCategoryId === cat.id}
-                  onPress={() =>
-                    setSelectedCategoryId(prev => (prev === cat.id ? null : cat.id))
-                  }
-                  isDark={isDark}
-                  glassScheme={glassScheme}
-                />
-              ))}
-              <Pressable
-                style={({pressed}) => [styles.addCatBtn, pressed && {opacity: 0.6}]}
-                onPress={() => setShowNewCategory(v => !v)}>
-                <Text style={{color: colors.muted, fontSize: 14}}>+</Text>
-                <Text style={styles.addCatText}>New</Text>
-              </Pressable>
-            </ScrollView>
-
-            {/* Inline new category form */}
-            {showNewCategory && (
-              <View style={styles.newCatForm}>
-                <TextInput
-                  style={styles.newCatInput}
-                  placeholder="Collection name"
-                  placeholderTextColor={colors.placeholder}
-                  value={newCatName}
-                  onChangeText={setNewCatName}
-                  maxLength={64}
-                  autoFocus
-                />
-                <View style={styles.colorRow}>
-                  {CATEGORY_PRESET_COLORS.map(c => (
-                    <Pressable
-                      key={c}
-                      onPress={() => setNewCatColor(c)}
-                      style={[
-                        styles.colorSwatch,
-                        {backgroundColor: c},
-                        newCatColor === c && styles.colorSwatchSelected,
-                      ]}
-                    />
-                  ))}
-                </View>
-                <View style={styles.newCatActions}>
-                  <Pressable
-                    style={styles.cancelBtn}
-                    onPress={() => setShowNewCategory(false)}>
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
-                  </Pressable>
-                  <Pressable
-                    style={styles.createBtn}
-                    onPress={handleCreateCategory}
-                    disabled={isCatSaving || !newCatName.trim()}>
-                    {isCatSaving ? (
-                      <ActivityIndicator size="small" color={colors.primaryDark} />
-                    ) : (
-                      <Text style={styles.createBtnText}>Create</Text>
-                    )}
-                  </Pressable>
+            {/* Verse text */}
+            <View style={styles.fieldBlock}>
+              <View>
+                <View style={[styles.fieldShadow, {backgroundColor: shadowColor}]} />
+                <View style={styles.fieldCard}>
+                  <View style={styles.quoteBlock}>
+                    <Text style={styles.quoteText}>{verseText}</Text>
+                  </View>
                 </View>
               </View>
-            )}
+            </View>
+
+            {/* Personal note */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.sectionLabel}>Personal Note</Text>
+              <View>
+                <View style={[styles.fieldShadow, {backgroundColor: shadowColor}]} />
+                <View style={styles.fieldCard}>
+                  <TextInput
+                    style={styles.noteInput}
+                    placeholder="What does this verse mean to you right now?"
+                    placeholderTextColor={colors.placeholder}
+                    value={moment}
+                    onChangeText={setMoment}
+                    multiline
+                    maxLength={1000}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {/* Collection picker */}
+            <View style={styles.fieldBlock}>
+              <Text style={styles.sectionLabel}>Add to Collection</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryRow}
+                contentContainerStyle={{paddingBottom: 4}}>
+                {categories.map(cat => (
+                  <CategoryChip
+                    key={cat.id}
+                    category={cat}
+                    selected={selectedCategoryId === cat.id}
+                    onPress={() =>
+                      setSelectedCategoryId(prev => (prev === cat.id ? null : cat.id))
+                    }
+                    isDark={isDark}
+                    glassScheme={glassScheme}
+                  />
+                ))}
+                <Pressable
+                  style={({pressed}) => [styles.addCatBtn, pressed && {opacity: 0.6}]}
+                  onPress={() => setShowNewCategory(v => !v)}>
+                  <Text style={{color: colors.muted, fontSize: 14}}>+</Text>
+                  <Text style={styles.addCatText}>New</Text>
+                </Pressable>
+              </ScrollView>
+
+              {showNewCategory && (
+                <View style={styles.newCatForm}>
+                  <TextInput
+                    style={styles.newCatInput}
+                    placeholder="Collection name"
+                    placeholderTextColor={colors.placeholder}
+                    value={newCatName}
+                    onChangeText={setNewCatName}
+                    maxLength={64}
+                    autoFocus
+                  />
+                  <View style={styles.colorRow}>
+                    {CATEGORY_PRESET_COLORS.map(c => (
+                      <Pressable
+                        key={c}
+                        onPress={() => setNewCatColor(c)}
+                        style={[
+                          styles.colorSwatch,
+                          {backgroundColor: c},
+                          newCatColor === c && styles.colorSwatchSelected,
+                        ]}
+                      />
+                    ))}
+                  </View>
+                  <View style={styles.newCatActions}>
+                    <Pressable
+                      style={styles.cancelBtn}
+                      onPress={() => setShowNewCategory(false)}>
+                      <Text style={styles.cancelBtnText}>Cancel</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.createBtn}
+                      onPress={handleCreateCategory}
+                      disabled={isCatSaving || !newCatName.trim()}>
+                      {isCatSaving ? (
+                        <ActivityIndicator size="small" color={PRIMARY_DARK} />
+                      ) : (
+                        <Text style={styles.createBtnText}>Create</Text>
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            <View style={{height: spacing.xl}} />
           </ScrollView>
 
-          {/* Save button — pinned at bottom */}
-          <View style={styles.saveBtnContainer}>
-            <Pressable
-              style={({pressed}) => [styles.saveBtn, pressed && {opacity: 0.85}]}
-              onPress={handleSave}
-              disabled={isSaving}>
-              <LinearGradient
-                colors={
-                  isDark
-                    ? ['#6B4E1A', '#4A3410', '#2D1E08']
-                    : ['#8B5E3C', '#5C3020', '#3E1E10']
-                }
-                start={{x: 0, y: 0}}
-                end={{x: 1, y: 0}}
-                style={styles.saveBtnGradient}
-              />
-              {isSaving ? (
-                <ActivityIndicator color="#FFFDF5" />
-              ) : (
-                <Text style={styles.saveBtnText}>Save to Library</Text>
-              )}
-            </Pressable>
+          {/* Save bar with gradient fade */}
+          <View>
+            <LinearGradient
+              colors={[
+                isDark ? 'rgba(14,10,6,0)' : 'rgba(255,253,245,0)',
+                isDark ? 'rgba(14,10,6,1)' : 'rgba(255,253,245,1)',
+              ]}
+              style={{height: 28, marginBottom: -1}}
+              pointerEvents="none"
+            />
+            <View
+              style={[
+                styles.saveBarOuter,
+                {backgroundColor: isDark ? '#0E0A06' : colors.background},
+              ]}>
+              <Pressable
+                style={({pressed}) => [
+                  styles.saveBtn,
+                  pressed && {opacity: 0.8},
+                  isSaving && {opacity: 0.6},
+                ]}
+                onPress={handleSave}
+                disabled={isSaving}>
+                {isSaving ? (
+                  <ActivityIndicator color="#FFFDF5" />
+                ) : (
+                  <Text style={styles.saveBtnText}>Save to Library</Text>
+                )}
+              </Pressable>
+            </View>
           </View>
+
         </KeyboardAvoidingView>
       </View>
     </Modal>

@@ -31,6 +31,7 @@ export type UpdateSermonNoteParams = Partial<CreateSermonNoteParams>;
 
 export async function listSermonNotes(token: string): Promise<SermonNote[]> {
   const raw = await request<RawSermonNote[]>('/sermon-notes', {}, token);
+  console.log('[SermonNotes] GET /sermon-notes response:', JSON.stringify(raw, null, 2));
   return raw.map(toSermonNote);
 }
 
@@ -40,34 +41,34 @@ export async function getSermonNote(token: string, id: number): Promise<SermonNo
 }
 
 export async function createSermonNote(token: string, params: CreateSermonNoteParams): Promise<SermonNote> {
+  const payload = {
+    title: params.title,
+    sermon_date: params.sermonDate,
+    body: params.body,
+  };
+  console.log('[SermonNotes] POST /sermon-notes payload:', JSON.stringify(payload, null, 2));
   const raw = await request<RawSermonNote>(
     '/sermon-notes',
-    {
-      method: 'POST',
-      body: JSON.stringify({
-        title: params.title,
-        sermon_date: params.sermonDate,
-        body: params.body,
-      }),
-    },
+    {method: 'POST', body: JSON.stringify(payload)},
     token,
   );
+  console.log('[SermonNotes] POST /sermon-notes response:', JSON.stringify(raw, null, 2));
   return toSermonNote(raw);
 }
 
 export async function updateSermonNote(token: string, id: number, params: UpdateSermonNoteParams): Promise<SermonNote> {
+  const payload = {
+    title: params.title,
+    sermon_date: params.sermonDate,
+    body: params.body,
+  };
+  console.log(`[SermonNotes] PATCH /sermon-notes/${id} payload:`, JSON.stringify(payload, null, 2));
   const raw = await request<RawSermonNote>(
     `/sermon-notes/${id}`,
-    {
-      method: 'PATCH',
-      body: JSON.stringify({
-        title: params.title,
-        sermon_date: params.sermonDate,
-        body: params.body,
-      }),
-    },
+    {method: 'PATCH', body: JSON.stringify(payload)},
     token,
   );
+  console.log(`[SermonNotes] PATCH /sermon-notes/${id} response:`, JSON.stringify(raw, null, 2));
   return toSermonNote(raw);
 }
 

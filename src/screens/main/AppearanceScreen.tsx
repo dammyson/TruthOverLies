@@ -1,16 +1,19 @@
-import React, {useMemo} from 'react';
-import {Pressable, StyleSheet, Switch, Text, View} from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
+import {
+  LiquidGlassView,
+  isLiquidGlassSupported,
+} from '@callstack/liquid-glass';
 
 import ScreenShell from '../../components/ScreenShell';
-import {ThemeMode, useTheme} from '../../context/ThemeContext';
-import {typography} from '../../theme/typography';
-import {radius, spacing} from '../../theme/spacing';
+import { ThemeMode, useTheme } from '../../context/ThemeContext';
+import { typography } from '../../theme/typography';
+import { radius, spacing } from '../../theme/spacing';
 
 // ── Mini phone preview ────────────────────────────────────────────────────────
 
-function PhonePreview({mode}: {mode: 'light' | 'dark'}) {
+function PhonePreview({ mode }: { mode: 'light' | 'dark' }) {
   const light = mode === 'light';
   const bg = light ? '#FAF8EE' : '#1A1510';
   const accent = light ? '#EBD0CF' : '#3A2216';
@@ -21,29 +24,57 @@ function PhonePreview({mode}: {mode: 'light' | 'dark'}) {
     <View style={previewStyles.frame}>
       <LinearGradient
         colors={[bg, accent]}
-        start={{x: 0, y: 0}}
-        end={{x: 0, y: 1}}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       {/* Dynamic island */}
       <View style={previewStyles.island} />
       {/* Hero text lines */}
       <View style={previewStyles.heroArea}>
-        <View style={[previewStyles.lineWide, {backgroundColor: line, opacity: 0.75}]} />
-        <View style={[previewStyles.lineNarrow, {backgroundColor: line, opacity: 0.4}]} />
+        <View
+          style={[
+            previewStyles.lineWide,
+            { backgroundColor: line, opacity: 0.75 },
+          ]}
+        />
+        <View
+          style={[
+            previewStyles.lineNarrow,
+            { backgroundColor: line, opacity: 0.4 },
+          ]}
+        />
       </View>
       {/* Card block */}
-      <View style={[previewStyles.cardBlock, {backgroundColor: card}]}>
-        <View style={[previewStyles.lineMed, {backgroundColor: line, opacity: 0.6}]} />
-        <View style={[previewStyles.lineMed, {backgroundColor: line, opacity: 0.35, width: '70%'}]} />
-        <View style={[previewStyles.lineMed, {backgroundColor: line, opacity: 0.25, width: '50%'}]} />
+      <View style={[previewStyles.cardBlock, { backgroundColor: card }]}>
+        <View
+          style={[
+            previewStyles.lineMed,
+            { backgroundColor: line, opacity: 0.6 },
+          ]}
+        />
+        <View
+          style={[
+            previewStyles.lineMed,
+            { backgroundColor: line, opacity: 0.35, width: '70%' },
+          ]}
+        />
+        <View
+          style={[
+            previewStyles.lineMed,
+            { backgroundColor: line, opacity: 0.25, width: '50%' },
+          ]}
+        />
       </View>
       {/* Bottom chips */}
       <View style={previewStyles.chipRow}>
         {[1, 2, 3].map(i => (
           <View
             key={i}
-            style={[previewStyles.chip, {backgroundColor: line, opacity: light ? 0.12 : 0.2}]}
+            style={[
+              previewStyles.chip,
+              { backgroundColor: line, opacity: light ? 0.12 : 0.2 },
+            ]}
           />
         ))}
       </View>
@@ -74,8 +105,8 @@ const previewStyles = StyleSheet.create({
     gap: 4,
     marginBottom: 6,
   },
-  lineWide: {height: 5, borderRadius: 3},
-  lineNarrow: {height: 4, borderRadius: 3, width: '60%'},
+  lineWide: { height: 5, borderRadius: 3 },
+  lineNarrow: { height: 4, borderRadius: 3, width: '60%' },
   cardBlock: {
     marginHorizontal: 7,
     borderRadius: 7,
@@ -83,7 +114,7 @@ const previewStyles = StyleSheet.create({
     gap: 3,
     marginBottom: 5,
   },
-  lineMed: {height: 4, borderRadius: 2},
+  lineMed: { height: 4, borderRadius: 2 },
   chipRow: {
     flexDirection: 'row',
     gap: 3,
@@ -98,14 +129,15 @@ const previewStyles = StyleSheet.create({
 
 // ── Radio button ──────────────────────────────────────────────────────────────
 
-function RadioDot({selected, color}: {selected: boolean; color: string}) {
+function RadioDot({ selected, color }: { selected: boolean; color: string }) {
   return (
     <View
       style={[
         radioStyles.outer,
-        {borderColor: selected ? color : 'rgba(128,100,70,0.3)'},
-        selected && {backgroundColor: color},
-      ]}>
+        { borderColor: selected ? color : 'rgba(128,100,70,0.3)' },
+        selected && { backgroundColor: color },
+      ]}
+    >
       {selected && <View style={radioStyles.check} />}
     </View>
   );
@@ -131,7 +163,7 @@ const radioStyles = StyleSheet.create({
 // ── Main screen ───────────────────────────────────────────────────────────────
 
 function AppearanceScreen() {
-  const {colors, isDark, themeMode, setThemeMode} = useTheme();
+  const { colors, isDark, themeMode, setThemeMode } = useTheme();
   const glassScheme = isDark ? 'dark' : 'light';
 
   const explicitMode: 'light' | 'dark' = isDark ? 'dark' : 'light';
@@ -165,7 +197,7 @@ function AppearanceScreen() {
           ...StyleSheet.absoluteFill,
           borderRadius: radius.xxl,
         },
-        cardContent: {padding: spacing.md + 2},
+        cardContent: { padding: spacing.md + 2 },
         previewRow: {
           flexDirection: 'row',
           justifyContent: 'space-around',
@@ -207,11 +239,13 @@ function AppearanceScreen() {
 
   return (
     <ScreenShell>
-      <Text style={styles.sectionLabel}>Appearance</Text>
-
       <View style={styles.card}>
         {isLiquidGlassSupported && (
-          <LiquidGlassView style={styles.cardGlass} effect="regular" colorScheme={glassScheme} />
+          <LiquidGlassView
+            style={styles.cardGlass}
+            effect="regular"
+            colorScheme={glassScheme}
+          />
         )}
         <View style={styles.cardContent}>
           {/* Light / Dark previews */}
@@ -220,9 +254,10 @@ function AppearanceScreen() {
               <Pressable
                 key={mode}
                 accessibilityRole="radio"
-                accessibilityState={{checked: explicitMode === mode}}
+                accessibilityState={{ checked: explicitMode === mode }}
                 onPress={() => handleModePress(mode)}
-                style={styles.previewItem}>
+                style={styles.previewItem}
+              >
                 <PhonePreview mode={mode} />
                 <Text style={styles.modeLabel}>
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -241,14 +276,14 @@ function AppearanceScreen() {
           <View style={styles.automaticRow}>
             <View>
               <Text style={styles.automaticLabel}>Automatic</Text>
-              <Text style={styles.automaticCaption}>Follows system appearance</Text>
+              <Text style={styles.automaticCaption}>
+                Follows system appearance
+              </Text>
             </View>
             <Switch
               value={themeMode === 'system'}
-              onValueChange={val =>
-                setThemeMode(val ? 'system' : explicitMode)
-              }
-              trackColor={{false: colors.border, true: colors.primary}}
+              onValueChange={val => setThemeMode(val ? 'system' : explicitMode)}
+              trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor={colors.white}
             />
           </View>
