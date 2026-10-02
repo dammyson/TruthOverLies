@@ -26,6 +26,7 @@ import {
 import { launchImageLibrary } from 'react-native-image-picker';
 
 import { RootStackParamList } from '../../navigation/RootNavigator';
+import { stripHtmlToPlainText } from '../../utils/text';
 import { useTheme } from '../../context/ThemeContext';
 import { useSermonNotes } from '../../context/SermonNoteContext';
 import { typography } from '../../theme/typography';
@@ -119,13 +120,7 @@ function SermonNoteDetailScreen({ route, navigation }: Props) {
       Alert.alert('Missing title', 'Please enter a sermon title.');
       return;
     }
-    const stripped = body
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .trim();
+    const stripped = stripHtmlToPlainText(body);
     if (!stripped) {
       Alert.alert('Missing body', 'Please enter the sermon note body.');
       return;

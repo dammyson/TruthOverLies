@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import Svg, {Circle, Line} from 'react-native-svg';
+import Svg, {Circle, Line, Path} from 'react-native-svg';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect} from '@react-navigation/native';
@@ -18,8 +18,13 @@ import {MenuView} from '@react-native-menu/menu';
 import {useTheme} from '../../context/ThemeContext';
 import {useBibleNav} from '../../context/BibleNavContext';
 import {useTabNav} from '../../context/TabNavContext';
+import {useScriptures} from '../../context/ScriptureContext';
 import SaveVerseSheet from '../../components/SaveVerseSheet';
-import {renderOsisRichText} from '../../bible/osisRichText';
+import BibleStyleSheet from '../../components/BibleStyleSheet';
+import {renderOsisRichText, osisToPlainText} from '../../bible/osisRichText';
+
+const FONT_SIZES: Record<string, number> = {sm: 14, md: 17, lg: 20, xl: 24};
+const LINE_MULTIPLIERS: Record<string, number> = {compact: 1.4, normal: 1.65, relaxed: 2.0};
 
 function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?: string}) {
   return (
@@ -57,6 +62,7 @@ function BibleHomeScreen() {
   const {pending, clearPending} = useBibleNav();
   const {jumpTo} = useTabNav();
   const insets = useSafeAreaInsets();
+  const {scriptures} = useScriptures();
 
   const savedLocation = bibleRepo.resolveBibleInitialLocation(
     bibleRepo.getLastBibleLocation(),
@@ -73,6 +79,11 @@ function BibleHomeScreen() {
   const [passageTitles, setPassageTitles] = useState<BiblePassageTitle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const [bibleStyle, setBibleStyleState] = useState<bibleRepo.BibleStyle>(
+    bibleRepo.getBibleStyle(),
+  );
+  const [styleSheetVisible, setStyleSheetVisible] = useState(false);
 
   const [bookPickerVisible, setBookPickerVisible] = useState(false);
   const [versionPickerVisible, setVersionPickerVisible] = useState(false);
@@ -210,6 +221,16 @@ function BibleHomeScreen() {
     setTranslation(t);
   }, []);
 
+  // Load persisted bible style from AsyncStorage on mount
+  useEffect(() => {
+    bibleRepo.getSavedBibleStyle().then(s => setBibleStyleState(s));
+  }, []);
+
+  const handleStyleChange = useCallback((s: bibleRepo.BibleStyle) => {
+    setBibleStyleState(s);
+    bibleRepo.setBibleStyle(s);
+  }, []);
+
   const goToPrev = useCallback(() => {
     if (chapter > 1) setChapter(ch => ch - 1);
   }, [chapter]);
@@ -217,6 +238,21 @@ function BibleHomeScreen() {
   const goToNext = useCallback(() => {
     if (chapter < chapterCount) setChapter(ch => ch + 1);
   }, [chapter, chapterCount]);
+
+  // Maps verse number → category color for the current book+chapter (first save wins)
+  const savedVerseMap = useMemo(() => {
+    const map = new Map<number, string | null>();
+    scriptures.forEach(s => {
+      if (s.bookId !== bookId || s.chapter !== chapter) return;
+      const end = s.verseEnd ?? s.verseStart;
+      for (let v = s.verseStart; v <= end; v++) {
+        if (!map.has(v)) {
+          map.set(v, s.categoryColor);
+        }
+      }
+    });
+    return map;
+  }, [scriptures, bookId, chapter]);
 
   // Compute selected verse range and combined text
   const selectedVerseData = useMemo(() => {
@@ -227,10 +263,13 @@ function BibleHomeScreen() {
     const selectedVersesList = verses.filter(v => selectedVerses.has(v.verse));
     selectedVersesList.sort((a, b) => a.verse - b.verse);
     const combinedText = selectedVersesList
-      .map(v => `[${v.verse}] ${v.text}`)
+      .map(v => `[${v.verse}] ${osisToPlainText(v.text)}`)
       .join(' ');
     return {verseStart, verseEnd, combinedText};
   }, [selectedVerses, verses]);
+
+  const bsFontSize = FONT_SIZES[bibleStyle.fontSize] ?? 17;
+  const bsLineHeight = Math.round(bsFontSize * (LINE_MULTIPLIERS[bibleStyle.lineSpacing] ?? 1.65));
 
   const styles = useMemo(
     () =>
@@ -282,31 +321,39 @@ function BibleHomeScreen() {
         verseBlock: {
           flexDirection: 'row',
           alignItems: 'flex-start',
-          paddingVertical: 6,
+          paddingVertical: bibleStyle.verseLayout === 'separated' ? 6 : 2,
           paddingHorizontal: spacing.xs,
           borderRadius: radius.sm,
-          marginBottom: 2,
+          marginBottom: bibleStyle.verseLayout === 'separated' ? 2 : 0,
         },
         verseHighlight: {
           backgroundColor: colors.primaryDark + '18',
         },
+        savedBookmark: {
+          width: 9,
+          height: 11,
+          marginLeft: 3,
+        },
         verseSelected: {
           backgroundColor: colors.primaryDark + '25',
+        },
+        verseNumCol: {
+          alignItems: 'center',
+          marginRight: 6,
         },
         verseNum: {
           fontSize: 11,
           fontWeight: '700',
           color: colors.primaryDark,
           marginTop: 5,
-          marginRight: 6,
           minWidth: 18,
           textAlign: 'right',
         },
         verseText: {
           ...typography.body,
           color: colors.text,
-          lineHeight: 28,
-          fontSize: 17,
+          lineHeight: bsLineHeight,
+          fontSize: bsFontSize,
           flex: 1,
         },
         passageTitle: {
@@ -316,6 +363,16 @@ function BibleHomeScreen() {
           marginTop: spacing.md,
           marginBottom: spacing.xs,
           paddingHorizontal: spacing.xs,
+        },
+        passageTitleContinuous: {
+          ...typography.subhead,
+          color: colors.primaryDark,
+          fontWeight: '700' as const,
+        },
+        verseNumInline: {
+          fontSize: 10,
+          fontWeight: '700' as const,
+          color: colors.primaryDark,
         },
         skeletonList: {
           paddingHorizontal: spacing.lg,
@@ -430,7 +487,7 @@ function BibleHomeScreen() {
           color: isDark ? colors.primaryDark : '#FFFDF5',
         },
       }),
-    [colors, insets, isDark],
+    [colors, insets, isDark, bibleStyle, bsFontSize, bsLineHeight],
   );
 
   return (
@@ -500,6 +557,8 @@ function BibleHomeScreen() {
               onPressAction={({nativeEvent}) => {
                 if (nativeEvent.event === 'saved') {
                   jumpTo(1);
+                } else if (nativeEvent.event === 'style') {
+                  setStyleSheetVisible(true);
                 } else if (nativeEvent.event === 'settings') {
                   jumpTo(4);
                 }
@@ -509,6 +568,12 @@ function BibleHomeScreen() {
                   id: 'saved',
                   title: 'Saved Scriptures',
                   image: 'bookmark',
+                  imageColor: colors.primaryDark,
+                },
+                {
+                  id: 'style',
+                  title: 'Bible Style',
+                  image: 'textformat.size',
                   imageColor: colors.primaryDark,
                 },
                 {
@@ -561,43 +626,101 @@ function BibleHomeScreen() {
               ref={scrollRef}
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}>
-              {verses.map(v => {
-                const isSelected = selectedVerses.has(v.verse);
-                const hasSelection = selectedVerses.size > 0;
-                const section = passageTitles.find(s => s.verse_start === v.verse);
-                return (
-                  <View key={`${bookId}-${chapter}-${v.verse}`}>
-                    {section ? (
-                      <Text style={styles.passageTitle}>{section.title}</Text>
-                    ) : null}
-                    <Pressable
-                      onPress={() => {
-                        if (hasSelection) {
-                          toggleVerseSelection(v.verse);
-                        }
-                      }}
-                      onLongPress={() => {
-                        if (!hasSelection) {
-                          toggleVerseSelection(v.verse);
-                        }
-                      }}
-                      style={({pressed}) => [
-                        styles.verseBlock,
-                        v.verse === highlightVerse && styles.verseHighlight,
-                        isSelected && styles.verseSelected,
-                        pressed && {opacity: 0.7},
-                      ]}
-                      onLayout={e => {
-                        verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
-                      }}>
-                      <Text style={styles.verseNum}>{v.verse}</Text>
-                      <Text style={styles.verseText}>
-                        {renderOsisRichText(v.text, styles.verseText)}
+              {bibleStyle.verseLayout === 'continuous' ? (
+                <Text style={styles.verseText}>
+                  {verses.map(v => {
+                    const section = passageTitles.find(s => s.verse_start === v.verse);
+                    const isSaved = savedVerseMap.has(v.verse);
+                    const isSelected = selectedVerses.has(v.verse);
+                    const hasSelection = selectedVerses.size > 0;
+                    const savedColor = isSaved
+                      ? (savedVerseMap.get(v.verse) ?? colors.primaryDark)
+                      : colors.primaryDark;
+                    const inlineBg = isSelected
+                      ? colors.primaryDark + '25'
+                      : isSaved
+                      ? savedColor + '28'
+                      : undefined;
+                    return (
+                      <Text
+                        key={`cv-${bookId}-${chapter}-${v.verse}`}
+                        onPress={() => {
+                          if (hasSelection) toggleVerseSelection(v.verse);
+                        }}
+                        onLongPress={() => {
+                          if (!hasSelection) toggleVerseSelection(v.verse);
+                        }}>
+                        {section != null ? (
+                          <Text style={styles.passageTitleContinuous}>
+                            {'\n\n'}{section.title}{'\n'}
+                          </Text>
+                        ) : null}
+                        <Text style={inlineBg ? {backgroundColor: inlineBg} : undefined}>
+                          <Text style={styles.verseNumInline}>{v.verse} </Text>
+                          {renderOsisRichText(v.text, styles.verseText)}
+                        </Text>
+                        {'  '}
                       </Text>
-                    </Pressable>
-                  </View>
-                );
-              })}
+                    );
+                  })}
+                </Text>
+              ) : (
+                verses.map(v => {
+                  const isSelected = selectedVerses.has(v.verse);
+                  const isSaved = savedVerseMap.has(v.verse);
+                  const savedColor = isSaved
+                    ? (savedVerseMap.get(v.verse) ?? colors.primaryDark)
+                    : colors.primaryDark;
+                  const hasSelection = selectedVerses.size > 0;
+                  const section = passageTitles.find(s => s.verse_start === v.verse);
+                  return (
+                    <View key={`${bookId}-${chapter}-${v.verse}`}>
+                      {section ? (
+                        <Text style={styles.passageTitle}>{section.title}</Text>
+                      ) : null}
+                      <Pressable
+                        onPress={() => {
+                          if (hasSelection) {
+                            toggleVerseSelection(v.verse);
+                          }
+                        }}
+                        onLongPress={() => {
+                          if (!hasSelection) {
+                            toggleVerseSelection(v.verse);
+                          }
+                        }}
+                        style={({pressed}) => [
+                          styles.verseBlock,
+                          isSaved && {backgroundColor: savedColor + '28'},
+                          v.verse === highlightVerse && styles.verseHighlight,
+                          isSelected && styles.verseSelected,
+                          pressed && {opacity: 0.7},
+                        ]}
+                        onLayout={e => {
+                          verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
+                        }}>
+                        <View style={styles.verseNumCol}>
+                          <Text style={styles.verseNum}>{v.verse}</Text>
+                        </View>
+                        <Text style={styles.verseText}>
+                          {renderOsisRichText(v.text, styles.verseText)}
+                          {isSaved && (
+                            <View style={styles.savedBookmark}>
+                              <Svg width={9} height={11} viewBox="0 0 24 24">
+                                <Path
+                                  d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"
+                                  fill={savedColor}
+                                  fillOpacity={0.8}
+                                />
+                              </Svg>
+                            </View>
+                          )}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  );
+                })
+              )}
             </ScrollView>
           )}
         </View>
@@ -666,6 +789,13 @@ function BibleHomeScreen() {
           setChapterCount(cc);
         }}
         onClose={() => setSearchVisible(false)}
+      />
+
+      <BibleStyleSheet
+        visible={styleSheetVisible}
+        bibleStyle={bibleStyle}
+        onChange={handleStyleChange}
+        onClose={() => setStyleSheetVisible(false)}
       />
 
       {saveSheetVisible && selectedVerseData && (

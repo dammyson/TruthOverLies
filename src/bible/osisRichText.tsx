@@ -111,8 +111,20 @@ function getTagStyle(name: string, attrs: Record<string, string>): TextStyle | u
       return {fontWeight: '700'};
     case 'transChange':
       return {fontStyle: 'italic'};
-    case 'q':
-      return {fontStyle: 'italic'};
+    case 'wj':
+      return {color: '#C41E3A'};
+    case 'q': {
+      const who = attrs.who ?? '';
+      const isDivine =
+        who === 'Jesus' ||
+        who === 'God' ||
+        who === 'LORD' ||
+        who === 'Yahweh' ||
+        who === 'Jesus Christ';
+      return isDivine
+        ? {color: '#C41E3A', fontStyle: 'italic'}
+        : {fontStyle: 'italic'};
+    }
     default:
       return undefined;
   }
@@ -151,6 +163,20 @@ function renderNodes(
     return acc;
   }, []);
 }
+
+export function osisToPlainText(rawText: string): string {
+  return (rawText ?? '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+// Note: for HTML from the rich-text editor use stripHtmlToPlainText from utils/text
 
 export function renderOsisRichText(
   rawText: string,

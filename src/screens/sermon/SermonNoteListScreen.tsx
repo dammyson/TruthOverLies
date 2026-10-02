@@ -12,6 +12,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Svg, { Path } from 'react-native-svg';
 
 import { RootStackParamList } from '../../navigation/RootNavigator';
+import { stripHtmlToPlainText } from '../../utils/text';
 import { useTheme } from '../../context/ThemeContext';
 import { useSermonNotes } from '../../context/SermonNoteContext';
 import { typography } from '../../theme/typography';
@@ -253,19 +254,7 @@ function SermonNoteListScreen({ navigation }: Props) {
                   </Text>
                 </View>
                 <Text style={styles.notePreview} numberOfLines={3}>
-                  {note.body
-                    .replace(/<br\s*\/?>/gi, '\n')
-                    .replace(/<\/p>/gi, '\n')
-                    .replace(/<\/li>/gi, '\n')
-                    .replace(/<[^>]*>/g, '')
-                    .replace(/&nbsp;/g, ' ')
-                    .replace(/&amp;/g, '&')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .replace(/&quot;/g, '"')
-                    .replace(/&#39;/g, "'")
-                    .replace(/\n{3,}/g, '\n\n')
-                    .trim()}
+                  {stripHtmlToPlainText(note.body)}
                 </Text>
               </Pressable>
             ))

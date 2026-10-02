@@ -379,6 +379,43 @@ export function setLastBibleLocation(location: BibleLocation): void {
   setSelectedTranslation(location.translation);
 }
 
+// ── Bible reading style ───────────────────────────────────────────────────────
+
+export type BibleStyle = {
+  fontSize: 'sm' | 'md' | 'lg' | 'xl';
+  lineSpacing: 'compact' | 'normal' | 'relaxed';
+  verseLayout: 'separated' | 'continuous';
+};
+
+const DEFAULT_BIBLE_STYLE: BibleStyle = {
+  fontSize: 'md',
+  lineSpacing: 'normal',
+  verseLayout: 'separated',
+};
+
+export function getBibleStyle(): BibleStyle {
+  return cacheGet<BibleStyle>('bible_style') ?? DEFAULT_BIBLE_STYLE;
+}
+
+export function setBibleStyle(style: BibleStyle): void {
+  cacheSet('bible_style', style);
+  AsyncStorage.setItem('bible_style', JSON.stringify(style)).catch(() => {});
+}
+
+export async function getSavedBibleStyle(): Promise<BibleStyle> {
+  try {
+    const raw = await AsyncStorage.getItem('bible_style');
+    if (raw) {
+      const parsed = JSON.parse(raw) as BibleStyle;
+      cacheSet('bible_style', parsed);
+      return parsed;
+    }
+    return getBibleStyle();
+  } catch {
+    return getBibleStyle();
+  }
+}
+
 // ── Default bible download (KJV on first login) ───────────────────────────────
 
 export async function ensureKjvDownloaded(): Promise<void> {
