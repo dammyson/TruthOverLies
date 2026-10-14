@@ -3298,10 +3298,10 @@ SPEC CHECKSUMS:
   FBLazyVector: 688bade2cc6ee3de2ba9a411c85c21fd908af3bc
   fmt: 530618a01105dae0fa3a2f27c81ae11fa8f67eac
   glog: e56ede4028c4b7418e6b1195a36b1656bb35e225
-  hermes-engine: 9569d63248cc4fa2a34a08ccf4642cb2097f79a7
-  LiquidGlass: ef8027f064bb732124ba4b1db0450768cea817eb
-  op-sqlite: 3687fdaeabf8d91a16a7531f539834bd012c6deb
-  RCT-Folly: 36c4f904fb6cd0219dcb76b94e9502d2a72fab0b
+  hermes-engine: 33b7492449245d36b5de6fa9a53e0bd511fb9921
+  LiquidGlass: fb9205c25c3926f5b2e379650e0ffc70d310445a
+  op-sqlite: b371423258f9d12ffcae13cc43ed60fe5f98f149
+  RCT-Folly: 957659fd132051eccf60310f242798220177d26e
   RCTDeprecation: 8f1dc8057e54ea6fd01df47d0d29487adc92c1a9
   RCTRequired: 9d02105f758490fab48d77fead2599a449321ab7
   RCTSwiftUI: 714ca60953e8b7779821eea889ebdc891851682b
