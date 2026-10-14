@@ -3,6 +3,7 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {
   Animated,
   Easing,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -613,6 +614,7 @@ function HomeScreen({navigation}: Props) {
             style={styles.chipsScroll}
             contentContainerStyle={styles.chipsScrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             keyboardShouldPersistTaps="handled">
             {isCatalogLoading ? (
               <View style={styles.skeletonRow}>

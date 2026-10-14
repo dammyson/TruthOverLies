@@ -18,6 +18,7 @@ import Svg, {Path} from 'react-native-svg';
 import {useTheme} from '../../context/ThemeContext';
 import {useJournals} from '../../context/JournalContext';
 import CloseButton from '../../components/CloseButton';
+import KeyboardDismissButton from '../../components/KeyboardDismissButton';
 import {Journal} from '../../types/app';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
@@ -281,6 +282,7 @@ function JournalEntrySheet({visible, entry, onClose}: Props) {
 
           <ScrollView
             style={styles.body}
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
 
@@ -361,6 +363,8 @@ function JournalEntrySheet({visible, entry, onClose}: Props) {
             </View>
           </View>
 
+          {/* Floats just above the save bar while the keyboard is open */}
+          <KeyboardDismissButton bottom={104} />
         </KeyboardAvoidingView>
       </View>
     </Modal>

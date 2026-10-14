@@ -5,6 +5,7 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Path} from 'react-native-svg';
 
+import LoginPromptModal from '../../components/LoginPromptModal';
 import ScreenShell from '../../components/ScreenShell';
 import {useAppContext} from '../../context/AppContext';
 import {useTheme} from '../../context/ThemeContext';
@@ -128,7 +129,7 @@ function ShieldIcon({size = 20, color = '#4A2F24'}: {size?: number; color?: stri
 
 function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {currentUser, savedCards, selectedFeelings} = useAppContext();
+  const {currentUser, logout, savedCards, selectedFeelings} = useAppContext();
   const {colors, isDark} = useTheme();
   const {journals} = useJournals();
   const {sermonNotes} = useSermonNotes();
@@ -136,6 +137,7 @@ function ProfileScreen() {
   const [journalOpen, setJournalOpen] = useState(false);
   const [entryOpen, setEntryOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<Journal | null>(null);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const pendingEntry = useRef<{entry: Journal | null} | null>(null);
 
   // Mock streak data - this would come from backend/context in production
@@ -153,6 +155,14 @@ function ProfileScreen() {
 
   // Total saved items (devotions + scriptures)
   const totalSaved = savedCards.length + scriptures.length;
+
+  const handleEditProfile = () => {
+    if (currentUser?.role === 'guest') {
+      setLoginPromptOpen(true);
+      return;
+    }
+    // TODO: navigate to the edit profile screen for signed-in users
+  };
 
   const handleNewEntry = () => {
     pendingEntry.current = {entry: null};
@@ -507,7 +517,10 @@ function ProfileScreen() {
           </View>
           <Text style={styles.userName}>{currentUser.fullName}</Text>
           <Text style={styles.userEmail}>{currentUser.email}</Text>
-          <Pressable style={({pressed}) => [styles.editButton, pressed && {opacity: 0.7}]}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={handleEditProfile}
+            style={({pressed}) => [styles.editButton, pressed && {opacity: 0.7}]}>
             <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
@@ -721,6 +734,15 @@ function ProfileScreen() {
         visible={entryOpen}
         entry={editingEntry}
         onClose={handleEntryClose}
+      />
+      <LoginPromptModal
+        message="Create a free account or log in to edit your profile and keep your journey in sync across devices."
+        onClose={() => setLoginPromptOpen(false)}
+        onLogin={() => {
+          setLoginPromptOpen(false);
+          logout();
+        }}
+        visible={loginPromptOpen}
       />
     </ScreenShell>
   );

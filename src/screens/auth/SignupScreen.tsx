@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import AuthCard from '../../components/AuthCard';
@@ -7,6 +7,7 @@ import FormField from '../../components/FormField';
 import MessageBanner from '../../components/MessageBanner';
 import PrimaryButton from '../../components/PrimaryButton';
 import ScreenShell from '../../components/ScreenShell';
+import TermsModal from '../../components/TermsModal';
 import { useAppContext } from '../../context/AppContext';
 import { useTheme } from '../../context/ThemeContext';
 import useTransitionAction from '../../hooks/useTransitionAction';
@@ -22,11 +23,40 @@ function SignupScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [termsVisible, setTermsVisible] = useState(false);
   const { isTransitioning, runWithTransition } = useTransitionAction();
 
   const styles = useMemo(
     () =>
       StyleSheet.create({
+        termsRow: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginTop: 4,
+        },
+        radioOuter: {
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          borderWidth: 2,
+          borderColor: colors.primary,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 10,
+        },
+        radioInner: {
+          width: 11,
+          height: 11,
+          borderRadius: 6,
+          backgroundColor: colors.primary,
+        },
+        termsText: {
+          flex: 1,
+          fontSize: 13,
+          lineHeight: 20,
+          color: colors.muted,
+        },
         footerText: {
           fontSize: 13,
           lineHeight: 20,
@@ -88,7 +118,29 @@ function SignupScreen({ navigation }: Props) {
           secureTextEntry
           value={confirmPassword}
         />
+        <View style={styles.termsRow}>
+          <Pressable
+            accessibilityLabel="Accept Terms and Conditions"
+            accessibilityRole="radio"
+            accessibilityState={{ checked: acceptedTerms }}
+            hitSlop={8}
+            onPress={() => setAcceptedTerms(prev => !prev)}
+            style={styles.radioOuter}
+          >
+            {acceptedTerms ? <View style={styles.radioInner} /> : null}
+          </Pressable>
+          <Text style={styles.termsText}>
+            I agree to the{' '}
+            <Text
+              onPress={() => setTermsVisible(true)}
+              style={styles.footerLink}
+            >
+              Terms & Conditions
+            </Text>
+          </Text>
+        </View>
         <PrimaryButton
+          disabled={!acceptedTerms}
           label="Create Account"
           loading={isTransitioning}
           onPress={() => {
@@ -105,6 +157,14 @@ function SignupScreen({ navigation }: Props) {
           </Text>
         </Pressable>
       </AuthCard>
+      <TermsModal
+        onAccept={() => {
+          setAcceptedTerms(true);
+          setTermsVisible(false);
+        }}
+        onClose={() => setTermsVisible(false)}
+        visible={termsVisible}
+      />
     </ScreenShell>
   );
 }

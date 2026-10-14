@@ -25,6 +25,7 @@ import {
 } from 'react-native-pell-rich-editor';
 import { launchImageLibrary } from 'react-native-image-picker';
 
+import KeyboardDismissButton from '../../components/KeyboardDismissButton';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { stripHtmlToPlainText } from '../../utils/text';
 import { useTheme } from '../../context/ThemeContext';
@@ -295,6 +296,7 @@ function SermonNoteDetailScreen({ route, navigation }: Props) {
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             keyboardShouldPersistTaps="handled"
           >
             {/* SERMON TITLE */}
@@ -461,6 +463,9 @@ function SermonNoteDetailScreen({ route, navigation }: Props) {
               </Pressable>
             )}
           </ScrollView>
+          <KeyboardDismissButton
+            onDismiss={() => richEditor.current?.blurContentEditor()}
+          />
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

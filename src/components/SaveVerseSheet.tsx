@@ -401,6 +401,7 @@ function SaveVerseSheet({
 
           <ScrollView
             style={styles.body}
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
 

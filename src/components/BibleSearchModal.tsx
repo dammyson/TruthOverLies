@@ -343,6 +343,7 @@ function BibleSearchModal({visible, translation, onSelect, onClose}: Props) {
         <ScrollView
           style={s.scroll}
           contentContainerStyle={s.scrollContent}
+          keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

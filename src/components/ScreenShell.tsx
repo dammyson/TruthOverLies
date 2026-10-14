@@ -11,6 +11,7 @@ import {
 
 import {useTheme} from '../context/ThemeContext';
 import {spacing} from '../theme/spacing';
+import KeyboardDismissButton from './KeyboardDismissButton';
 
 type ScreenShellProps = {
   children: ReactNode;
@@ -45,6 +46,7 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={styles.scrollContent}
+      keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
       keyboardShouldPersistTaps="handled">
       <View style={styles.canvas}>{children}</View>
     </ScrollView>
@@ -63,6 +65,7 @@ function ScreenShell({children, scrollable = true, keyboardAware = false}: Scree
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.flex}>
           {content}
+          <KeyboardDismissButton />
         </KeyboardAvoidingView>
       ) : (
         content
