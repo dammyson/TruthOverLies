@@ -4,6 +4,8 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MainTabNavigator from './MainTabNavigator';
 import SavedDetailScreen from '../screens/main/SavedDetailScreen';
 import AppearanceScreen from '../screens/main/AppearanceScreen';
+import AboutScreen from '../screens/main/AboutScreen';
+import PrivacyScreen from '../screens/main/PrivacyScreen';
 import ChapterGridScreen from '../screens/bible/ChapterGridScreen';
 import ReaderScreen from '../screens/bible/ReaderScreen';
 import SermonNoteDetailScreen from '../screens/sermon/SermonNoteDetailScreen';
@@ -16,6 +18,8 @@ export type RootStackParamList = {
   MainTabs: undefined;
   SavedDetail: {card: DevotionCard};
   Appearance: undefined;
+  About: undefined;
+  Privacy: undefined;
   ChapterGrid: {
     bookId: string;
     bookName: string;
@@ -65,6 +69,30 @@ function RootNavigator() {
         options={({navigation}) => ({
           headerShown: true,
           headerTitle: 'Appearance',
+          headerBackVisible: false,
+          headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
+          headerShadowVisible: false,
+          headerStyle: {backgroundColor: colors.background},
+        })}
+      />
+      <Stack.Screen
+        name="About"
+        component={AboutScreen}
+        options={({navigation}) => ({
+          headerShown: true,
+          headerTitle: 'About',
+          headerBackVisible: false,
+          headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
+          headerShadowVisible: false,
+          headerStyle: {backgroundColor: colors.background},
+        })}
+      />
+      <Stack.Screen
+        name="Privacy"
+        component={PrivacyScreen}
+        options={({navigation}) => ({
+          headerShown: true,
+          headerTitle: 'Privacy',
           headerBackVisible: false,
           headerLeft: () => <GlassBackButton onPress={() => navigation.goBack()} />,
           headerShadowVisible: false,

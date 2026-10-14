@@ -13,24 +13,13 @@ static NSString *const kWidgetVerseKey = @"widget_verse";
 
 static void ReloadWidgetTimelinesIfAvailable(void)
 {
-  if (@available(iOS 14.0, *)) {
-    Class widgetCenterClass = NSClassFromString(@"WidgetCenter");
-    if (widgetCenterClass == Nil) {
-      return;
-    }
-
-    SEL sharedCenterSelector = NSSelectorFromString(@"sharedCenter");
-    if (![widgetCenterClass respondsToSelector:sharedCenterSelector]) {
-      return;
-    }
-
+  // Implemented in AppDelegate.swift because WidgetCenter has no Objective-C API.
+  Class reloader = NSClassFromString(@"WidgetReloader");
+  SEL reloadSelector = NSSelectorFromString(@"reloadAll");
+  if (reloader != Nil && [reloader respondsToSelector:reloadSelector]) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
-    id center = [widgetCenterClass performSelector:sharedCenterSelector];
-    SEL reloadSelector = NSSelectorFromString(@"reloadAllTimelines");
-    if (center != nil && [center respondsToSelector:reloadSelector]) {
-      [center performSelector:reloadSelector];
-    }
+    [reloader performSelector:reloadSelector];
 #pragma clang diagnostic pop
   }
 }

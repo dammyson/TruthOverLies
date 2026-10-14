@@ -12,7 +12,5 @@ import SwiftUI
 struct TOLWidgetBundle: WidgetBundle {
     var body: some Widget {
         TOLWidget()
-        TOLWidgetControl()
-        TOLWidgetLiveActivity()
     }
 }

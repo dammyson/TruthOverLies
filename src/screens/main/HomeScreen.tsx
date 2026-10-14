@@ -33,6 +33,7 @@ import {radius, spacing} from '../../theme/spacing';
 import {FeelingOption} from '../../types/app';
 import {HomeStackParamList} from '../../navigation/HomeStackNavigator';
 import {syncVerseToWidget} from '../../widgets/widgetBridge';
+import WidgetGuideModal from '../../components/WidgetGuideModal';
 
 type Props = NativeStackScreenProps<HomeStackParamList, 'HomeMain'>;
 
@@ -176,17 +177,14 @@ function HomeScreen({navigation}: Props) {
     });
   };
 
-  const [widgetAdded, setWidgetAdded] = useState(false);
-  const widgetResetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [widgetGuideOpen, setWidgetGuideOpen] = useState(false);
 
   const handleAddWidgetVerse = () => {
     syncVerseToWidget({
       text: featuredVerse.text,
       reference: featuredVerse.reference,
     });
-    setWidgetAdded(true);
-    if (widgetResetTimer.current) clearTimeout(widgetResetTimer.current);
-    widgetResetTimer.current = setTimeout(() => setWidgetAdded(false), 1500);
+    setWidgetGuideOpen(true);
   };
 
   useEffect(() => {
@@ -524,14 +522,17 @@ function HomeScreen({navigation}: Props) {
           <View style={styles.heroVerseWrap}>
             <VerseLink reference={featuredVerse.reference} style={styles.heroReferenceText} />
             <View style={styles.heroActionRow}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Add verse to widget"
-                onPress={handleAddWidgetVerse}
-                style={({pressed}) => [styles.heroWidgetButton, pressed && {opacity: 0.8}]}
-              >
-                <Text style={styles.heroWidgetButtonText}>{widgetAdded ? 'Added ✓' : 'Add Widget'}</Text>
-              </Pressable>
+              {/* Only iOS ships a home screen widget for now */}
+              {Platform.OS === 'ios' && (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Add verse to widget"
+                  onPress={handleAddWidgetVerse}
+                  style={({pressed}) => [styles.heroWidgetButton, pressed && {opacity: 0.8}]}
+                >
+                  <Text style={styles.heroWidgetButtonText}>Add Widget</Text>
+                </Pressable>
+              )}
               <ShareIconButton
                 onPress={handleShareFeaturedVerse}
                 color="#F8E9D9"
@@ -681,6 +682,12 @@ function HomeScreen({navigation}: Props) {
           />
         </View>
       </View>
+      <WidgetGuideModal
+        onClose={() => setWidgetGuideOpen(false)}
+        verseReference={featuredVerse.reference}
+        verseText={featuredVerse.text}
+        visible={widgetGuideOpen}
+      />
     </ScreenShell>
   );
 }

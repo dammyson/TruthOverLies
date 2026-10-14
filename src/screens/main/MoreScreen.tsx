@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Alert, Platform, Pressable, Share, StyleSheet, Text, View} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {LiquidGlassView, isLiquidGlassSupported} from '@callstack/liquid-glass';
@@ -11,6 +11,7 @@ import {useTheme} from '../../context/ThemeContext';
 import {typography} from '../../theme/typography';
 import {radius, spacing} from '../../theme/spacing';
 import {RootStackParamList} from '../../navigation/RootNavigator';
+import {APP_INFO} from '../../constants/appInfo';
 
 // ── SF Symbol–style SVG icons ──────────────────────────────────────────────
 
@@ -101,7 +102,7 @@ const ROWS: SettingsRow[] = [
     iconBg: '#4A6B8A', // muted blue
     IconComponent: IconAbout,
     label: 'About',
-    description: 'TruthOverLies v1.0',
+    description: `${APP_INFO.name} v${APP_INFO.version}`,
   },
   {
     key: 'share',
@@ -125,9 +126,34 @@ function MoreScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const glassScheme = isDark ? 'dark' : 'light';
 
+  const handleShareApp = async () => {
+    // Prefer the store for the sharer's platform, but include the other if it's set.
+    const links = (
+      Platform.OS === 'ios'
+        ? [APP_INFO.appStoreUrl, APP_INFO.playStoreUrl]
+        : [APP_INFO.playStoreUrl, APP_INFO.appStoreUrl]
+    ).filter(Boolean);
+    const message = [
+      `I've been using ${APP_INFO.name} for daily devotions, Bible reading and journaling. I think you'd love it too!`,
+      ...links,
+    ].join('\n\n');
+
+    try {
+      await Share.share({message, title: `Join me on ${APP_INFO.name}`});
+    } catch {
+      Alert.alert('Share failed', 'Could not open the share sheet.');
+    }
+  };
+
   const onRowPress = (key: string) => {
     if (key === 'appearance') {
       navigation.navigate('Appearance');
+    } else if (key === 'about') {
+      navigation.navigate('About');
+    } else if (key === 'share') {
+      handleShareApp();
+    } else if (key === 'privacy') {
+      navigation.navigate('Privacy');
     }
   };
 
