@@ -38,7 +38,7 @@ PODS:
   - hermes-engine (250829098.0.14):
     - hermes-engine/Pre-built (= 250829098.0.14)
   - hermes-engine/Pre-built (250829098.0.14)
-  - LiquidGlass (0.8.0):
+  - LiquidGlass (0.8.2):
     - boost
     - DoubleConversion
     - fast_float
@@ -66,7 +66,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - op-sqlite (18.0.0):
+  - op-sqlite (18.2.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -2073,7 +2073,7 @@ PODS:
     - SocketRocket
     - SwiftUIIntrospect (~> 1.0)
     - Yoga
-  - react-native-image-picker (8.2.1):
+  - react-native-image-picker (8.3.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2129,7 +2129,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-safe-area-context (5.8.0):
+  - react-native-safe-area-context (5.10.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2147,8 +2147,8 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-safe-area-context/common (= 5.8.0)
-    - react-native-safe-area-context/fabric (= 5.8.0)
+    - react-native-safe-area-context/common (= 5.10.1)
+    - react-native-safe-area-context/fabric (= 5.10.1)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2159,7 +2159,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-safe-area-context/common (5.8.0):
+  - react-native-safe-area-context/common (5.10.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2187,7 +2187,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - react-native-safe-area-context/fabric (5.8.0):
+  - react-native-safe-area-context/fabric (5.10.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -2876,7 +2876,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNScreens (4.26.2):
+  - RNScreens (4.30.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2903,10 +2903,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNScreens/common (= 4.26.2)
+    - RNScreens/common (= 4.30.0)
     - SocketRocket
     - Yoga
-  - RNScreens/common (4.26.2):
+  - RNScreens/common (4.30.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2935,7 +2935,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
-  - RNSVG (15.15.5):
+  - RNSVG (15.16.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2961,10 +2961,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNSVG/common (= 15.15.5)
+    - RNSVG/common (= 15.16.0)
     - SocketRocket
     - Yoga
-  - RNSVG/common (15.15.5):
+  - RNSVG/common (15.16.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -2994,6 +2994,8 @@ PODS:
     - Yoga
   - SocketRocket (0.7.1)
   - SwiftUIIntrospect (1.3.0)
+  - TextToSpeech (4.1.1):
+    - React-Core
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -3090,6 +3092,7 @@ DEPENDENCIES:
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - SocketRocket (~> 0.7.1)
+  - TextToSpeech (from `../node_modules/react-native-tts`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -3281,6 +3284,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-screens"
   RNSVG:
     :path: "../node_modules/react-native-svg"
+  TextToSpeech:
+    :path: "../node_modules/react-native-tts"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -3294,8 +3299,8 @@ SPEC CHECKSUMS:
   fmt: 530618a01105dae0fa3a2f27c81ae11fa8f67eac
   glog: e56ede4028c4b7418e6b1195a36b1656bb35e225
   hermes-engine: 9569d63248cc4fa2a34a08ccf4642cb2097f79a7
-  LiquidGlass: fb9205c25c3926f5b2e379650e0ffc70d310445a
-  op-sqlite: b371423258f9d12ffcae13cc43ed60fe5f98f149
+  LiquidGlass: ef8027f064bb732124ba4b1db0450768cea817eb
+  op-sqlite: 3687fdaeabf8d91a16a7531f539834bd012c6deb
   RCT-Folly: 36c4f904fb6cd0219dcb76b94e9502d2a72fab0b
   RCTDeprecation: 8f1dc8057e54ea6fd01df47d0d29487adc92c1a9
   RCTRequired: 9d02105f758490fab48d77fead2599a449321ab7
@@ -3334,9 +3339,9 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: decdae7103e813515783ba0c8c2810c6b0e6a92d
   React-mutationobservernativemodule: 5dd46129f133a3404bf9be3e675d635af726014f
   react-native-bottom-tabs: 06b42b859c694efc650c3057d6d20b485eb3797d
-  react-native-image-picker: 0314366753615115fa55c3cc937ac44cb7e75702
+  react-native-image-picker: 928876093503a1951bed2cfe57d7164dab93632a
   react-native-menu: 8d2c831a735c9e6528c28b26ca14e57591d87e14
-  react-native-safe-area-context: ebd2c2ece5e6e650a6963184039ec8cfd8960d86
+  react-native-safe-area-context: 735c8ebacdececeb034ce0524f80ef1a484f67fe
   react-native-view-shot: 39463aa6cfaeab0a3533cc63f869d52d025ef2ff
   react-native-webview: 254a8650a0213d9adcb2d5103a245c701edd9649
   React-NativeModulesApple: 97ae486265acd2ff95877650fbbd01c398851645
@@ -3374,10 +3379,11 @@ SPEC CHECKSUMS:
   ReactCodegen: a0a155a9a10985ce8f65b2e6fe68016728c7624f
   ReactCommon: 00abba14a8d9028ee0d36efddcb8e13406af6845
   RNDateTimePicker: 2ccfc095241504160e678ddd49bf5c2d3ed7760a
-  RNScreens: 40460e1c9a818613c7004427f953005971f314fc
-  RNSVG: cbe5c58e91b42b65e8499ca6776590fd10fe1e70
+  RNScreens: 50b586aba203b7be5939f8877368f48fd66d5f16
+  RNSVG: 2d52481c7bc74f25ac9e1a26339d544ef558259c
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
   SwiftUIIntrospect: fee9aa07293ee280373a591e1824e8ddc869ba5d
+  TextToSpeech: 89b239221ec378d213af422d14789a729705360b
   Yoga: 18b7c3b4ad4df70f7c1f90871213fd001e6c3528
 
 PODFILE CHECKSUM: 5ad0436794497874d56a6e1c15aa60e5c507255e
