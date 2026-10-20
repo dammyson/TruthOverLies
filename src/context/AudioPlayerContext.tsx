@@ -2,10 +2,24 @@ import React, {createContext, useCallback, useContext, useEffect, useRef, useSta
 import Tts from 'react-native-tts';
 import {BibleVerse} from '../api/bible';
 
+// Prepare verse text for natural-sounding speech
+function cleanVerseForSpeech(html: string): string {
+  return (html ?? '')
+    .replace(/<[^>]*>/g, ' ')       // strip all tags (OSIS, HTML)
+    .replace(/^\s*\d+\s+/, '')      // drop leading verse number if present in text
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, 'and')
+    .replace(/&lt;/g, '')
+    .replace(/&gt;/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 export type TtsVoice = {
   id: string;
   name: string;
   language: string;
+  quality: number; // 250=Standard, 500=Enhanced, 750=Premium
 };
 
 export type AudioStatus = 'idle' | 'playing' | 'paused';
@@ -18,10 +32,10 @@ export type AudioTrack = {
 };
 
 export const SPEED_STEPS = [
-  {label: '0.5×', rate: 0.25},
-  {label: '1×', rate: 0.5},
-  {label: '1.5×', rate: 0.75},
-  {label: '2×', rate: 1.0},
+  {label: '0.75×', rate: 0.38},
+  {label: '1×', rate: 0.45},   // slightly below AVSpeechUtteranceDefaultSpeechRate (0.5) — sounds more natural
+  {label: '1.25×', rate: 0.55},
+  {label: '1.5×', rate: 0.65},
 ] as const;
 
 type AudioPlayerContextType = {
@@ -66,9 +80,12 @@ export function AudioPlayerProvider({children}: {children: React.ReactNode}) {
     if (!verse) return;
     queueIndexRef.current = index;
     setCurrentVerse(verse.verse);
-    // Strip any OSIS/XML markup before speaking
-    const plain = verse.text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-    Tts.speak(plain);
+    const plain = cleanVerseForSpeech(verse.text);
+    Tts.speak(plain, {
+      pitchMultiplier: 0.9,
+      preUtteranceDelay: index === 0 ? 0 : 0.35,  // breathing gap between verses
+      postUtteranceDelay: 0.1,
+    } as any);
   };
 
   useEffect(() => {
@@ -76,15 +93,49 @@ export function AudioPlayerProvider({children}: {children: React.ReactNode}) {
       .then(async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const all: any[] = await Tts.voices();
-        const en: TtsVoice[] = all
+
+        // Preferred narrator names — Premium/Enhanced iOS voices, distinct characters.
+        // We pick the 5 best available on the device rather than exposing dozens.
+        const PREFERRED_NAMES = ['Samantha', 'Karen', 'Daniel'];
+
+        // Boost quality score by voice ID pattern — works before native rebuild
+        const qualityScore = (v: any): number => {
+          const id = (v.id ?? '').toLowerCase();
+          if (id.includes('premium')) return 750;
+          if (id.includes('enhanced')) return 500;
+          return v.quality ?? 250;
+        };
+
+        const mapped: TtsVoice[] = all
           .filter(v => v.language?.startsWith('en') && !v.notInstalled)
-          .map(v => ({id: v.id, name: v.name ?? v.id, language: v.language}));
-        setVoices(en);
-        if (en.length > 0) {
-          setActiveVoiceId(en[0].id);
-          await Tts.setDefaultVoice(en[0].id);
+          .map(v => ({
+            id: v.id,
+            name: v.name ?? v.id,
+            language: v.language,
+            quality: qualityScore(v),
+          }))
+          .sort((a, b) => b.quality - a.quality);
+
+        // Keep one entry per preferred name (highest quality for that name),
+        // then fill remaining slots up to 5 from the next best voices.
+        const seen = new Set<string>();
+        const curated: TtsVoice[] = [];
+        for (const name of PREFERRED_NAMES) {
+          const match = mapped.find(v => v.name.startsWith(name) && !seen.has(v.id));
+          if (match) { curated.push(match); seen.add(match.id); }
+        }
+        for (const v of mapped) {
+          if (curated.length >= 3) break;
+          if (!seen.has(v.id)) { curated.push(v); seen.add(v.id); }
+        }
+
+        setVoices(curated);
+        if (curated.length > 0) {
+          setActiveVoiceId(curated[0].id);
+          await Tts.setDefaultVoice(curated[0].id);
         }
         await Tts.setDefaultRate(SPEED_STEPS[1].rate);
+        await Tts.setDefaultPitch(0.9); // slightly lower = more natural, less robotic
       })
       .catch((err: unknown) => console.warn('[TTS] init:', err));
 

@@ -74,6 +74,9 @@ export default function NarratorSheet({visible, onClose}: Props) {
           <Text style={[s.title, {color: colors.text}]}>Narrator Voice</Text>
           <CloseButton onPress={onClose} />
         </View>
+        <Text style={[s.hint, {color: colors.muted}]}>
+          Premium &amp; Enhanced voices sound most natural
+        </Text>
 
         {voices.length === 0 ? (
           <View style={{paddingHorizontal: spacing.md, paddingBottom: spacing.lg}}>
@@ -93,6 +96,18 @@ export default function NarratorSheet({visible, onClose}: Props) {
             showsVerticalScrollIndicator={false}>
             {voices.map(voice => {
               const active = voice.id === activeVoiceId;
+              const qualityLabel =
+                voice.quality >= 750
+                  ? 'Premium'
+                  : voice.quality >= 500
+                  ? 'Enhanced'
+                  : 'Standard';
+              const qualityColor =
+                voice.quality >= 750
+                  ? '#7B5EA7'
+                  : voice.quality >= 500
+                  ? '#2E7D32'
+                  : colors.muted;
               return (
                 <Pressable
                   key={voice.id}
@@ -111,13 +126,20 @@ export default function NarratorSheet({visible, onClose}: Props) {
                     },
                   ]}>
                   <View style={{flex: 1}}>
-                    <Text
-                      style={[
-                        s.voiceName,
-                        {color: active ? colors.primaryDark : colors.text},
-                      ]}>
-                      {voice.name}
-                    </Text>
+                    <View style={s.nameRow}>
+                      <Text
+                        style={[
+                          s.voiceName,
+                          {color: active ? colors.primaryDark : colors.text},
+                        ]}>
+                        {voice.name}
+                      </Text>
+                      <View style={[s.badge, {borderColor: qualityColor}]}>
+                        <Text style={[s.badgeText, {color: qualityColor}]}>
+                          {qualityLabel}
+                        </Text>
+                      </View>
+                    </View>
                     <Text style={[s.voiceLang, {color: colors.muted}]}>
                       {voice.language}
                     </Text>
@@ -169,6 +191,13 @@ const s = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
   },
+  hint: {
+    ...typography.caption1,
+    textAlign: 'center',
+    marginTop: -8,
+    marginBottom: 8,
+    paddingHorizontal: spacing.md,
+  },
   voiceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -177,6 +206,14 @@ const s = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderRadius: radius.sm,
   },
+  nameRow: {flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap'},
   voiceName: {...typography.subhead, fontWeight: '600'},
   voiceLang: {...typography.caption1, marginTop: 2},
+  badge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+  badgeText: {...typography.caption2, fontWeight: '600'},
 });
