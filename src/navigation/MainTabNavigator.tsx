@@ -12,7 +12,6 @@ import ProfileScreen from '../screens/main/ProfileScreen';
 import SavedScreen from '../screens/main/SavedScreen';
 import {useTheme} from '../context/ThemeContext';
 import FloatingJournalButton from '../components/FloatingJournalButton';
-import AudioMiniPlayer from '../components/AudioMiniPlayer';
 import JournalListModal from '../screens/journal/JournalListModal';
 import JournalEntrySheet from '../screens/journal/JournalEntrySheet';
 import {Journal} from '../types/app';
@@ -200,7 +199,6 @@ function MainTabNavigator() {
         tabBarActiveTintColor={colors.primaryDark}
         tabBarInactiveTintColor={colors.tabIdle}
       />
-      <AudioMiniPlayer />
       {showFab && (
         <FloatingJournalButton onPress={() => setJournalOpen(true)} />
       )}
