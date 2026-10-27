@@ -67,6 +67,8 @@ export type ApiUserProfile = {
   email: string;
   full_name: string;
   role: string;
+  current_streak: number;
+  longest_streak: number;
   created_at: string;
 };
 

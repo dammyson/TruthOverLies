@@ -40,6 +40,7 @@ type AppContextValue = {
   loginAsGuest: () => Promise<void>;
   signup: (fullName: string, email: string, password: string, confirmPassword?: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshProfile: () => void;
   clearAuthMessage: () => void;
   toggleFeeling: (feeling: FeelingOption) => void;
   clearSelectedFeelings: () => void;
@@ -84,18 +85,7 @@ function AppProvider({children}: {children: ReactNode}) {
         loadUserData(token, !!cachedCatalog);
         ensureKjvDownloaded(); // ensure KJV is present on every app start
 
-        // Refresh profile silently
-        authApi.getMe(token).then(me => {
-          const refreshed: AuthUser = {
-            id: me.id,
-            fullName: me.full_name,
-            email: me.email,
-            role: me.role,
-            createdAt: me.created_at,
-          };
-          setCurrentUser(refreshed);
-          storage.set(CACHE_KEYS.USER_PROFILE, refreshed);
-        }).catch(() => {});
+        refreshProfile(token);
       }
 
       setIsInitialising(false);
@@ -158,6 +148,26 @@ function AppProvider({children}: {children: ReactNode}) {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
+  // Refresh profile (incl. streak) silently from /users/me
+  function refreshProfile(token: string | null = authToken) {
+    if (!token) {
+      return;
+    }
+    authApi.getMe(token).then(me => {
+      const refreshed: AuthUser = {
+        id: me.id,
+        fullName: me.full_name,
+        email: me.email,
+        role: me.role,
+        createdAt: me.created_at,
+        currentStreak: me.current_streak ?? 0,
+        longestStreak: me.longest_streak ?? 0,
+      };
+      setCurrentUser(refreshed);
+      storage.set(CACHE_KEYS.USER_PROFILE, refreshed);
+    }).catch(() => {});
+  }
+
   const clearAuthMessage = () => setAuthMessage('');
   const clearSelectedFeelings = () => setSelectedFeelings([]);
 
@@ -169,6 +179,7 @@ function AppProvider({children}: {children: ReactNode}) {
       storage.set(CACHE_KEYS.USER_PROFILE, user),
     ]);
     loadUserData(token);
+    refreshProfile(token);
     ensureKjvDownloaded(); // fire-and-forget — downloads KJV offline on first login
   }
 
@@ -394,6 +405,7 @@ function AppProvider({children}: {children: ReactNode}) {
       loginAsGuest,
       signup,
       logout,
+      refreshProfile,
       clearAuthMessage,
       toggleFeeling,
       clearSelectedFeelings,

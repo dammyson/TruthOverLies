@@ -1,6 +1,6 @@
-import React, {useMemo, useRef, useState} from 'react';
+import React, {useCallback, useMemo, useRef, useState} from 'react';
 import {Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Svg, {Path} from 'react-native-svg';
@@ -18,6 +18,8 @@ import {Journal} from '../../types/app';
 import {RootStackParamList} from '../../navigation/RootNavigator';
 import JournalListModal from '../journal/JournalListModal';
 import JournalEntrySheet from '../journal/JournalEntrySheet';
+
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100, 365];
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -129,7 +131,7 @@ function ShieldIcon({size = 20, color = '#4A2F24'}: {size?: number; color?: stri
 
 function ProfileScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const {currentUser, logout, savedCards, selectedFeelings} = useAppContext();
+  const {currentUser, logout, refreshProfile, savedCards, selectedFeelings} = useAppContext();
   const {colors, isDark} = useTheme();
   const {journals} = useJournals();
   const {sermonNotes} = useSermonNotes();
@@ -140,9 +142,20 @@ function ProfileScreen() {
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const pendingEntry = useRef<{entry: Journal | null} | null>(null);
 
-  // Mock streak data - this would come from backend/context in production
-  const streakDays = 12;
-  const daysToMilestone = 3;
+  // Streak comes from /users/me — refresh whenever the screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      refreshProfile();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
+
+  const streakDays = currentUser?.currentStreak ?? 0;
+  const longestStreak = currentUser?.longestStreak ?? 0;
+  const nextMilestone =
+    STREAK_MILESTONES.find(m => m > streakDays) ??
+    Math.ceil((streakDays + 1) / 100) * 100;
+  const daysToMilestone = nextMilestone - streakDays;
 
   // Get last feeling with time ago
   const lastFeeling = useMemo(() => {
@@ -551,7 +564,10 @@ function ProfileScreen() {
               </View>
               <Text style={styles.statLabel}>Current Streak</Text>
               <Text style={styles.streakTagline}>Keep the peace flowing</Text>
-              <Text style={styles.statSubtitle}>{daysToMilestone} days to next milestone</Text>
+              <Text style={styles.statSubtitle}>
+                {daysToMilestone} {daysToMilestone === 1 ? 'day' : 'days'} to next milestone
+              </Text>
+              <Text style={styles.statSubtitle}>Longest: {longestStreak} days</Text>
             </View>
             <View style={styles.streakRight}>
               <Text style={styles.streakNumber}>{streakDays}</Text>

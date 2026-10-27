@@ -14,6 +14,8 @@ export type AuthUser = {
   email: string;
   role: string;
   createdAt: string;
+  currentStreak?: number;
+  longestStreak?: number;
 };
 
 export type FeelingOption =
