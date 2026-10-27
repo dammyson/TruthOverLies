@@ -19,7 +19,6 @@ import {useTheme} from '../../context/ThemeContext';
 import {useBibleNav} from '../../context/BibleNavContext';
 import {useTabNav} from '../../context/TabNavContext';
 import {useScriptures} from '../../context/ScriptureContext';
-import {useAudioPlayer} from '../../context/AudioPlayerContext';
 import SaveVerseSheet from '../../components/SaveVerseSheet';
 import BibleStyleSheet from '../../components/BibleStyleSheet';
 import {renderOsisRichText, osisToPlainText} from '../../bible/osisRichText';
@@ -35,30 +34,6 @@ function MagnifyingGlass({size = 20, color = '#8E8E93'}: {size?: number; color?:
         x1="15.5" y1="15.5" x2="21" y2="21"
         stroke={color} strokeWidth="2.2" strokeLinecap="round"
       />
-    </Svg>
-  );
-}
-
-function SpeakerIcon({size = 20, color = '#8E8E93', active = false}: {size?: number; color?: string; active?: boolean}) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M11 5L6 9H2v6h4l5 4V5z"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={active ? color : 'none'}
-      />
-      {active ? null : (
-        <>
-          <Path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke={color} strokeWidth="2" strokeLinecap="round" />
-          <Path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke={color} strokeWidth="2" strokeLinecap="round" />
-        </>
-      )}
-      {active ? (
-        <Path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
-      ) : null}
     </Svg>
   );
 }
@@ -88,8 +63,6 @@ function BibleHomeScreen() {
   const {jumpTo} = useTabNav();
   const insets = useSafeAreaInsets();
   const {scriptures} = useScriptures();
-  const {play: audioPlay, stop: audioStop, status: audioStatus, track: audioTrack, currentVerse: narratingVerse} = useAudioPlayer();
-
   const savedLocation = bibleRepo.resolveBibleInitialLocation(
     bibleRepo.getLastBibleLocation(),
     bibleRepo.getSelectedTranslation(),
@@ -355,9 +328,6 @@ function BibleHomeScreen() {
         verseHighlight: {
           backgroundColor: colors.primaryDark + '18',
         },
-        verseNarrating: {
-          backgroundColor: colors.primaryDark + '38',
-        },
         savedBookmark: {
           width: 9,
           height: 11,
@@ -582,35 +552,6 @@ function BibleHomeScreen() {
               <MagnifyingGlass size={18} color={colors.text} />
             </Pressable>
 
-            {/* Audio narration toggle */}
-            <Pressable
-              onPress={() => {
-                if (audioStatus !== 'idle' && audioTrack?.bookId === bookId && audioTrack?.chapter === chapter) {
-                  audioStop();
-                } else {
-                  audioPlay({bookId, bookName, chapter, verses});
-                }
-              }}
-              style={({pressed}) => [
-                styles.iconBtn,
-                !isLiquidGlassSupported && styles.iconBtnFallback,
-                pressed && {opacity: 0.6},
-              ]}
-              hitSlop={8}>
-              {isLiquidGlassSupported && (
-                <LiquidGlassView
-                  style={StyleSheet.absoluteFill}
-                  effect="regular"
-                  colorScheme={isDark ? 'dark' : 'light'}
-                />
-              )}
-              <SpeakerIcon
-                size={18}
-                color={colors.text}
-                active={audioStatus !== 'idle' && audioTrack?.bookId === bookId && audioTrack?.chapter === chapter}
-              />
-            </Pressable>
-
             <MenuView
               onPressAction={({nativeEvent}) => {
                 if (nativeEvent.event === 'saved') {
@@ -694,15 +635,8 @@ function BibleHomeScreen() {
                     const savedColor = isSaved
                       ? (savedVerseMap.get(v.verse) ?? colors.primaryDark)
                       : colors.primaryDark;
-                    const isCurrentNarrating =
-                      audioStatus !== 'idle' &&
-                      audioTrack?.bookId === bookId &&
-                      audioTrack?.chapter === chapter &&
-                      narratingVerse === v.verse;
                     const inlineBg = isSelected
                       ? colors.primaryDark + '25'
-                      : isCurrentNarrating
-                      ? colors.primaryDark + '38'
                       : isSaved
                       ? savedColor + '28'
                       : undefined;
@@ -754,21 +688,13 @@ function BibleHomeScreen() {
                             toggleVerseSelection(v.verse);
                           }
                         }}
-                        style={({pressed}) => {
-                          const isCurrentNarrating =
-                            audioStatus !== 'idle' &&
-                            audioTrack?.bookId === bookId &&
-                            audioTrack?.chapter === chapter &&
-                            narratingVerse === v.verse;
-                          return [
-                            styles.verseBlock,
-                            isSaved && {backgroundColor: savedColor + '28'},
-                            v.verse === highlightVerse && styles.verseHighlight,
-                            isCurrentNarrating && styles.verseNarrating,
-                            isSelected && styles.verseSelected,
-                            pressed && {opacity: 0.7},
-                          ];
-                        }}
+                        style={({pressed}) => [
+                          styles.verseBlock,
+                          isSaved && {backgroundColor: savedColor + '28'},
+                          v.verse === highlightVerse && styles.verseHighlight,
+                          isSelected && styles.verseSelected,
+                          pressed && {opacity: 0.7},
+                        ]}
                         onLayout={e => {
                           verseYOffsets.current.set(v.verse, e.nativeEvent.layout.y);
                         }}>
