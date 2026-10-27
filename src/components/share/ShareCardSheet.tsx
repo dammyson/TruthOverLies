@@ -98,11 +98,6 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
     return resolveShareTheme(payload, colorPaletteId);
   }, [payload, colorPaletteId]);
 
-  const feelingLabel =
-    payload?.kind === 'devotion' && payload.feelings.length > 0
-      ? payload.feelings.join(' · ')
-      : null;
-
   const reset = useCallback(() => {
     setPreviewUri(null);
     setIsCapturing(false);
@@ -278,7 +273,6 @@ function ShareCardSheet({visible, payload, onClose}: Props) {
 
             <Text style={[styles.previewLabel, {color: colors.muted}]}>
               Preview · {bgLabel} · {arrLabel}
-              {feelingLabel ? ` · ${feelingLabel}` : ''}
             </Text>
 
             <View style={[styles.previewFrame, {height: PREVIEW_HEIGHT}]}>

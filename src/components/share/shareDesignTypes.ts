@@ -30,13 +30,13 @@ export type ShareContent = {
 };
 
 export function buildShareContent(payload: ShareCardPayload, theme: ShareTheme): ShareContent {
+  // Feelings are private — never print them (or a feeling-derived badge) on a shared card
   const badgeLabel =
     payload.kind === 'devotion'
-      ? (payload.feelings[0] ?? theme.badge).toUpperCase()
+      ? 'DEVOTION'
       : payload.categoryName?.toUpperCase() ?? theme.badge;
 
-  const devotionFeelings =
-    payload.kind === 'devotion' ? payload.feelings.filter(Boolean) : [];
+  const devotionFeelings: string[] = [];
 
   const referenceLine =
     payload.kind === 'scripture' && payload.translation
